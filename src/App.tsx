@@ -9,6 +9,7 @@ import { createPrivateScope, loadPrivate } from './private-load';
 import { priceDisplay } from '../shared/price-display';
 import { PropertyMap } from './PropertyMap';
 import { cbsAttribution, cbsDocumentation, cbsLicence, currentOfficialGeography } from '../shared/official-geography';
+import { MobileRoot } from './MobileRoot';
 
 type View = 'new' | 'favourite' | 'dismissed' | 'profile';
 const labels: Record<View, string> = { new: 'Nieuw', favourite: 'Favorieten', dismissed: 'Afgewezen', profile: 'Profiel' };
@@ -21,7 +22,7 @@ function readDemo() {
   try { const raw = localStorage.getItem('huurmonitor-demo-v1'); if (raw) return JSON.parse(raw) as ReturnType<typeof initialDemo>; } catch { /* Storage may be unavailable. */ }
   return initialDemo();
 }
-function Gallery({ listing, demo }: { listing: Listing; demo: boolean }) {
+function Gallery({ listing, demo, presentation }: { listing: Listing; demo: boolean; presentation?: 'story' | 'dossier' }) {
   const [index, setIndex] = useState(0), [elapsed, setElapsed] = useState(0);
   const [paused, setPaused] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
   const [held, setHeld] = useState(false), [visible, setVisible] = useState(true), [onscreen, setOnscreen] = useState(true), [focused, setFocused] = useState(false);
@@ -45,7 +46,7 @@ function Gallery({ listing, demo }: { listing: Listing; demo: boolean }) {
     return () => clearInterval(timer);
   }, [running]);
   useEffect(() => { if (elapsed >= 6000) move(1); }, [elapsed]);
-  return <div className="gallery" ref={ref} onFocus={() => setFocused(true)} onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false); }}>
+  return <div className={presentation ? `gallery m-gallery m-gallery-${presentation}` : 'gallery'} ref={ref} onFocus={() => setFocused(true)} onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false); }}>
     {count > 0 && !broken ? <button className="photo-tap" aria-label="Foto: tik links voor vorige, rechts voor volgende. Gebruik ook de fotoknoppen."
       onPointerDown={() => setHeld(true)} onPointerUp={() => setHeld(false)} onPointerCancel={() => setHeld(false)} onPointerLeave={() => setHeld(false)}
       onClick={e => { const rect = e.currentTarget.getBoundingClientRect(); move(e.clientX && e.clientX < rect.left + rect.width / 2 ? -1 : 1); }}>
@@ -53,6 +54,7 @@ function Gallery({ listing, demo }: { listing: Listing; demo: boolean }) {
     </button> : <div className="photo-fallback"><Icon name="home" size={44}/><strong>{broken ? 'Deze bronfoto kon niet laden' : 'Geen foto beschikbaar'}</strong><span>Bekijk de originele advertentie voor beeld.</span>{broken && count > 1 && <button onClick={() => move(1)}>Probeer volgende foto</button>}</div>}
     {count > 1 && <div className="story-progress" aria-label={`Foto ${index + 1} van ${count}`}>{listing.photos.map((_, i) => <span key={i}><i style={{ width: `${i < index ? 100 : i > index ? 0 : elapsed / 60}%` }}/></span>)}</div>}
     <span className="photo-label">{demo ? 'Demo · bronfoto, mogelijk verouderd' : `Bronfoto · ${sources[listing.source]}`}</span>
+    {presentation && count > 0 && <span className="m-gallery-counter">{index + 1} / {count} · bronfoto</span>}
     {count > 1 && <div className="photo-controls"><button onClick={() => move(-1)} aria-label="Vorige foto"><Icon name="prev"/></button><span>{index + 1} / {count}</span><button onClick={() => setPaused(p => !p)} aria-label={paused ? 'Fotostory afspelen' : 'Fotostory pauzeren'} aria-pressed={paused}><Icon name={paused ? 'play' : 'pause'}/></button><button onClick={() => move(1)} aria-label="Volgende foto"><Icon name="next"/></button></div>}
   </div>;
 }
@@ -108,6 +110,13 @@ function ProfileForm({ value, busy, demo, save }: { value: Profile; busy: boolea
   </form></div>;
 }
 export default function App() {
+  const [mobile, setMobile] = useState(() => matchMedia('(max-width: 760px)').matches);
+  useEffect(() => {
+    const media = matchMedia('(max-width: 760px)');
+    const change = () => setMobile(media.matches);
+    media.addEventListener('change', change);
+    return () => media.removeEventListener('change', change);
+  }, []);
   const [demo, setDemo] = useState(!cloud), [session, setSession] = useState<Session | null>(null);
   const [homes, setHomes] = useState<Home[]>(() => !cloud ? readDemo().homes : []), [profile, setProfile] = useState<Profile>(() => !cloud ? readDemo().profile : neutralProfile);
   const [runs, setRuns] = useState<SourceRun[]>(() => !cloud ? demoRuns : []), [delivery, setDelivery] = useState('');
@@ -194,6 +203,7 @@ export default function App() {
   const signOut = () => { privateScope.current.switchOwner(null); mode.current = 'signedout'; clearPrivateState(); setSession(null); setDemo(false); void cloud?.auth.signOut().then(({ error }) => { if (error && mode.current === 'signedout') setError(`Uitloggen niet bevestigd: ${error.message}. Sluit deze browser of probeer opnieuw voordat je het apparaat deelt.`); }); };
   const selectHome = (key: string) => { setSelected(key); };
   const totalNew = displayed.filter(h => h.decision === 'new' && h.evaluation.eligible).length;
+  if (mobile && (demo || session)) return <MobileRoot view={view} switchView={switchView} homes={displayed} active={active} filtered={filtered} selectHome={selectHome} profile={profile} demo={demo} busy={busy} loading={loading} error={error} notice={notice} undo={undo} changeDecision={(key,decision,remember) => void changeDecision(key,decision,remember)} save={p => void saveProfile(p)} runs={runs} delivery={delivery} Gallery={Gallery} refresh={!demo && session ? () => void load(session.user.id) : undefined} accountActions={<>{session && !demo && <button onClick={signOut}>Uitloggen</button>}{cloud && demo && <button onClick={leaveDemo}>Naar privéprofiel</button>}</>}/>;
   return <>
     <a className="skip-link" href="#main">Naar inhoud</a><header className="app-header"><a className="brand" href="#" onClick={e => { e.preventDefault(); switchView('new'); }}><span className="brand-mark"><Icon name="home" size={23}/></span>Huurmonitor<span className="brand-location">Groningen</span></a><div className="account">{demo ? <span className="demo-tag">Demomodus</span> : <span className="private-tag">Privé</span>}{session && !demo && <button onClick={signOut}>Uitloggen</button>}{cloud && demo && <button onClick={leaveDemo}>Naar privéprofiel</button>}</div></header>
     <nav className="navigation" aria-label="Hoofdnavigatie">{(Object.keys(labels) as View[]).map(v => <button key={v} onClick={() => switchView(v)} aria-current={view === v ? 'page' : undefined}><Icon name={v}/><span>{labels[v]}</span>{v === 'new' && totalNew > 0 && <span className="count">{totalNew}</span>}</button>)}</nav>
