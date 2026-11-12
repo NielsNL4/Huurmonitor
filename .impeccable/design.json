@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-11T00:00:00Z",
+  "title": "Design System: Huurmonitor",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Rental green" },
+      "ink": { "role": "neutral", "displayName": "Petrol ink" },
+      "canvas": { "role": "neutral", "displayName": "Cool daylight canvas" }
+    },
+    "shadows": [ { "name": "selected-row", "value": "0 2px 6px #183c4809", "purpose": "Subtle selected-row separation" } ],
+    "motion": [ { "name": "control-state", "value": "background .16s ease-out", "purpose": "Button state feedback" }, { "name": "photo-story", "value": "6000ms", "purpose": "Advance photos within a home, never homes; focus within pauses without changing manual/reduced-motion pause state" } ],
+    "breakpoints": [ { "name": "mobile", "value": "760px" }, { "name": "compact-desktop", "value": "1050px" }, { "name": "wide-desktop", "value": "1500px" } ]
+  },
+  "components": [
+    { "name": "Primary button", "kind": "button", "refersTo": "button-primary", "description": "Save decisions and profile.", "html": "<button class=\"ds-primary\">Bewaren</button>", "css": ".ds-primary{font:600 16px system-ui;padding:9px 16px;min-height:44px;border:1px solid var(--accent,#22654e);border-radius:8px;background:var(--accent,#22654e);color:white}.ds-primary:hover{background:#174f3c}.ds-primary:active{background:#103c2d}.ds-primary:focus-visible{outline:3px solid #146ea4;outline-offset:3px}" },
+    { "name": "Secondary button", "kind": "button", "refersTo": "button-secondary", "description": "Reversible secondary actions.", "html": "<button class=\"ds-secondary\">Afwijzen</button>", "css": ".ds-secondary{font:600 16px system-ui;padding:9px 16px;min-height:44px;border:1px solid #cbd6da;border-radius:8px;background:white;color:var(--ink,#213d46)}.ds-secondary:hover{background:#eaf0f1}.ds-secondary:active{background:#dce8e7}.ds-secondary:focus-visible{outline:3px solid #146ea4;outline-offset:3px}" },
+    { "name": "Profile field", "kind": "input", "description": "Native labelled numeric preference.", "html": "<label class=\"ds-label\">Maximum (€)<input class=\"ds-input\" type=\"number\" placeholder=\"Geen voorkeur\"></label>", "css": ".ds-label{font:600 13px system-ui;color:var(--ink,#213d46)}.ds-input{display:block;font:16px system-ui;padding:12px;border:1px solid #bdcbd0;border-radius:7px;background:#fff;color:var(--ink,#213d46);margin-top:7px}.ds-input::placeholder{color:#637780}.ds-input:focus-visible{outline:3px solid #146ea4;outline-offset:3px}" },
+    { "name": "Demo label", "kind": "chip", "description": "Explicitly separate samples from private data.", "html": "<span class=\"ds-demo\">Demomodus</span>", "css": ".ds-demo{display:inline-block;font:600 13px system-ui;background:#edf2f3;border:1px solid #dce4e6;border-radius:5px;padding:4px 9px;color:#213d46}" },
+    { "name": "Photo-story tracks", "kind": "custom", "description": "Always-visible segmented tracks above an explicitly full-width cover photo; dark-backed rail remains legible at zero elapsed time.", "html": "<div class=\"ds-tracks\"><span><i style=\"width:45%\"></i></span><span></span><span></span></div>", "css": ".ds-tracks{display:flex;gap:5px;align-items:center;height:16px;padding:6px;box-sizing:border-box;background:#18313ee6;border-radius:5px}.ds-tracks>span{display:block;flex:1;min-width:0;height:4px;background:#aabbbf;border-radius:4px;overflow:hidden}.ds-tracks i{display:block;height:100%;background:white}" },
+    { "name": "Direct source status", "kind": "custom", "description": "Compact meaningful source messages are visible without disclosure controls.", "html": "<section class=\"ds-source\"><div><strong>Gruno</strong><span>Uitgeschakeld</span></div><p>Live monitoring uit; toegang beoordelen vóór inschakelen.</p></section>", "css": ".ds-source{font:12px/1.6 system-ui;color:#5a6c74;padding:12px 0;border-bottom:1px solid #dce3e5}.ds-source>div{display:flex;justify-content:space-between;gap:12px}.ds-source strong{font-size:13px;color:#213d46}.ds-source p{margin:7px 0 0}" },
+    { "name": "Destination navigation", "kind": "nav", "description": "Named collections, selected marker.", "html": "<nav class=\"ds-nav\"><button aria-current=\"page\">Nieuw</button><button>Favorieten</button></nav>", "css": ".ds-nav{display:flex;gap:28px;border-bottom:1px solid #dce3e5}.ds-nav button{font:600 14px system-ui;min-height:44px;background:white;border:0;padding:12px 4px;color:#5a6c74}.ds-nav button[aria-current]{color:#22654e;border-bottom:3px solid #22654e}.ds-nav button:hover{background:#eaf0f1}.ds-nav button:focus-visible{outline:3px solid #146ea4;outline-offset:3px}" }
+  ],
+  "narrative": {
+    "northStar": "Read the home, then decide",
+    "overview": "An operating interface for a person reviewing rentals in daylight on a phone or laptop. Real source photography leads; compact Dutch labels make cost uncertainty and saved decisions understandable.",
+    "keyCharacteristics": ["photo-first", "labelled uncertainty", "reversible decisions", "familiar controls"],
+    "rules": [ { "name": "The Known Is Not All-In Rule", "body": "A strong price value is always adjacent to the known-monthly qualifier and its all-in caveat, never treated as a marketing headline.", "section": "colors" } ],
+    "dos": ["Do preserve the property-profile mobile view and desktop list/detail structure.", "Do keep complete descriptions and explicit unknown facts accessible.", "Do reserve space outside the reading viewport for decision/navigation controls."],
+    "donts": ["Don't turn the app into metric cards, dating scores or a marketing landing page.", "Don't imply a source photo is current or licensed for redistribution without evidence.", "Don't put development briefs, private profile data or worker secrets into browser assets.", "Don't use decorative/useless accordions or disclosures. Dropdowns only serve genuine selection; never hide a trivial source message or profile explanation behind a control. This is an explicit durable user rule."]
+  }
+}
