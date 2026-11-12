@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.impeccable/config.local.json
+.impeccable/review/
+*.log
+data/
+# Source photos are local-review-only; redistribution rights are unconfirmed.
+public/photos/*
+!public/photos/PROVENANCE.md
