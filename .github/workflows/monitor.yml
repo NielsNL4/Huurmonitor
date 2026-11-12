@@ -1,0 +1,36 @@
+name: Daily monitor (opt-in)
+on:
+  schedule:
+    - cron: '17 7 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: personal-monitor
+  cancel-in-progress: false
+jobs:
+  monitor:
+    # No fetch, database call, send or dependency install until explicitly enabled.
+    if: ${{ vars.ENABLE_MONITORING == 'true' && vars.SOURCE_ALLOWLIST != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run worker
+        env:
+          ENABLE_MONITORING: ${{ vars.ENABLE_MONITORING }}
+          SOURCE_ALLOWLIST: ${{ vars.SOURCE_ALLOWLIST }}
+          ENABLE_EMAIL: ${{ vars.ENABLE_EMAIL }}
+          EMAIL_TRANSPORT: ${{ vars.EMAIL_TRANSPORT }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OWNER_USER_ID: ${{ secrets.OWNER_USER_ID }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
