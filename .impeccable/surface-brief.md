@@ -1,4 +1,27 @@
 # Property review · src/App.tsx
+## Mobile reference contract (supersedes daylight mobile direction below)
+At ≤760px, reproduce each supplied Stitch screen independently using the accepted
+five-screen brief. Actual PNGs were opened, then HTML read. Work at 390 CSS px;
+height-capped export widths are not verified original viewport widths. No new
+direction tournament, generated imagery or context rerun. Desktop stays unchanged.
+New: dark Hanken/Newsreader, 56px masthead, source strip, full-bleed 4:5 gallery,
+qualified price/real address, normal-flow decisions, ordered reading sections.
+Favourites: 24px-inset 16:10 feed, actual-source rail, serif prices/addresses.
+Archive: 16px-inset grayscale 16:9 feed, real search/evaluation chips and timestamps.
+Dossier: collection-only mobile subview, 4:3 gallery, numbered sections, genuine
+source identifier, Back restoring collection scroll. Geist/Mono and brass on
+Archive/Dossier. Profile retains every supported criterion and nullable input;
+save does not scan. All supported sources remain visible.
+Preserve six-second gallery/focus/visibility/reduced-motion logic, photo taps and
+explicit navigation, header-only decision drag/vertical safety, Undo/Restore and
+key-only New top reset. No private notes, CBS district filters, fabricated facts,
+legal/verification claims, deletion, application or document transfer. Original
+advertisement CTA and source-coordinate OSM privacy/attribution remain.
+Verification owner: implementation; one check/build, focused UI-state tests,
+isolated demo 390px five-screen capture batch and cheap desktop1440 comparison,
+then at most one material-fix/confirmation round. No live/private mutations.
+All work stays uncommitted; reference exports are not shipped assets.
+
 Mode: Operate. One person reviewing Groningen rentals at home and on a phone, in daylight. No comp or generated imagery. Pinned mobile property-profile and desktop split-view direction is authoritative; do not rerun the decision flow.
 
 User-pinned interaction rule: no decorative/useless accordions or disclosures. Sources, cost breakdown and profile-match explanation are direct compact content. Dropdowns only for genuine selection, such as profile criteria; never a replacement disclosure. Keep photo taps/explicit prev-next and title/header decision drag unchanged; no horizontal photo swipe added.

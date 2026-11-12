@@ -57,6 +57,47 @@ components:
     padding: "9px 16px"
 ---
 
+## Mobile editorial override · November 2026
+
+At **≤760px only**, the five user-supplied Stitch screenshots govern their own
+screen, followed by their HTML, then the exported Noord Archief DESIGN. This
+overrides the daylight mobile rules below, **not desktop**. Desktop keeps the
+incumbent light green/petrol palette, system typography, actions and split view.
+
+- New: `#141412`, `#f4f3ef`, fine `#292826` dividers; Hanken Grotesk and Newsreader.
+  A 56px italic masthead, source strip and full-bleed 4:5 story precede the real
+  address, qualified price and equal 48px decisions in normal flow. Sections:
+  Kenmerken → Kostenbasis → Locatie & omgeving → Voorwaarden → Omschrijving → source.
+- Favourites: `#121212`, inset 16:10 photography, 24px gutters, serif addresses
+  and prices, actual-source filters and three-column facts. Cards open a dossier;
+  removal means removal from favourites, never deletion. No private notes.
+- Archive: `#131313`, `#1c1b1b` cards, brass `#dbc48b`, Geist/JetBrains Mono with
+  Newsreader; 16px gutters, grayscale 16:9 images. Search and chips use current
+  stored data/evaluation. Only actual dismissal dates appear. All homes retained.
+- Dossier: mobile collection subview, 4:3 gallery, numbered specification,
+  criteria, location and description sections. Back restores origin and reading
+  position before paint. Genuine source ID/agency; CTA opens the original ad.
+- Profile: dark Hanken/Newsreader, flat divided sections, nullable editable
+  budgets and optional synchronized range controls, actual supported types,
+  bedrooms, area, price basis, income, unknown and email preferences. Save only;
+  sources are directly visible. Operational copy is not a live-worker claim.
+
+Navigation keeps Nieuw / Favorieten / Afgewezen / Profiel, including where the
+references used other labels. New/Profile have text navigation; collections and
+dossier use icon labels. Source-only automatic OSM maps, attribution and privacy
+disclosure remain. Advertisement neighbourhood and CBS buurt/wijk stay separate.
+Unsupported notes, district filters, travel estimates, legal/accreditation claims,
+verified dossiers and application/document transfer are deliberately omitted.
+Unknown facts are explicit, not replaced by reference claims.
+
+All five actual PNGs were inspected. Implementation/comparison width is 390 CSS
+pixels; the 231–390px-wide height-capped exports do not establish original CSS
+viewport widths. Match corresponding regions, not stretched full-page height;
+no pixel-perfect or unshown responsive claim. Unshown empty/loading/error/auth
+states inherit the world. Self-hosted fonts and verbatim OFLs: `public/fonts/`.
+Reference exports remain private, unmodified, outside application assets. Only
+existing actual listing/demo photography is used; the demo can lack source photos.
+
 # Design System: Huurmonitor
 
 ## Overview

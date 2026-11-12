@@ -3,6 +3,17 @@
   "generatedAt": "2026-11-11T00:00:00Z",
   "title": "Design System: Huurmonitor",
   "extensions": {
+    "mobileEditorial": {
+      "boundary": "max-width: 760px; desktop unchanged",
+      "authority": "Each of five user-supplied actual Stitch PNGs, then its HTML, then exported DESIGN",
+      "workingWidth": "390 CSS px; scaled full-page export viewport uncertain",
+      "surfaces": { "newProfile": "#141412", "favourite": "#121212", "archiveDossier": "#131313", "brass": "#dbc48b" },
+      "typography": "Self-hosted OFL Newsreader + Hanken Grotesk; Archive/Dossier Geist + JetBrains Mono + Newsreader",
+      "galleryRatios": { "new": "4:5", "favourite": "16:10", "archive": "16:9 grayscale", "dossier": "4:3" },
+      "behaviour": "Shared business state; normal-flow New decisions; collection dossier Back restores scroll; key-only New top reset; save only",
+      "omissions": "Unsupported notes, district filters, travel/legal/verification claims, deletion and document/application controls",
+      "assets": "Original exports private/unmodified; only incumbent real listing/demo photos shipped"
+    },
     "colorMeta": {
       "primary": { "role": "primary", "displayName": "Rental green" },
       "ink": { "role": "neutral", "displayName": "Petrol ink" },
