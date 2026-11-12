@@ -20,7 +20,7 @@ Bring rental options from Gruno Verhuur, Solide Verhuur and Maxx (maxxhuren.nl) 
 
 ## Operating Context
 
-Initial monitoring cadence: daily. The user reviews matching properties and opens original advertisements. Start with email notifications. SMS was raised as a question, not selected; Telegram is an optional alternative, not an approved dependency.
+Requested monitoring cadence: **daily at 10:00 Europe/Amsterdam**, DST-aware; this latest time supersedes 06:00. The user explicitly authorized committing/pushing the corrected workflow, encrypted Actions configuration, the owner's email opt-in, one manual all-three-source full scan/normal qualifying digest verification, and daily activation. The corrected workflow must be published before activation, with actual setup/run outcomes verified rather than assumed. GitHub schedules are best effort, not exact-on-the-minute guarantees. The user reviews matching properties and opens original advertisements. Start with email notifications. SMS was raised as a question, not selected; Telegram is an optional alternative, not an approved dependency.
 
 ## Capabilities and Constraints
 
