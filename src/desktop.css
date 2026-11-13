@@ -1,0 +1,120 @@
+/* Approved mobile editorial identity, adapted to the incumbent desktop split view.
+   Font faces are shared with mobile.css; Vite resolves their local URLs for base. */
+@media (min-width:761px) {
+  :root {
+    --ink:#f4f3ef; --muted:#aaa8a1; --accent:#f4f3ef; --line:#292826;
+    --surface:#141412; --focus:#dbc48b; --radius:0;
+    --serif:MobileNewsreader,Georgia,serif;
+    background:var(--surface); color:var(--ink); color-scheme:dark;
+    font-family:MobileHanken,sans-serif;
+  }
+  html:has(.desktop-view-favourite) { --surface:#121212; --line:#2c2b29; }
+  html:has(.desktop-view-dismissed) {
+    --surface:#131313; --ink:#e5e2e1; --muted:#b1b0aa;
+    font-family:MobileGeist,sans-serif;
+  }
+  body,#root { background:var(--surface); }
+  * { scrollbar-color:#55534b var(--surface); scrollbar-width:thin; }
+  ::selection { background:#dbc48b; color:#131313; }
+  button {
+    background:transparent; color:var(--ink); border-color:#55534b;
+    border-radius:0; font-weight:400;
+  }
+  button:hover:not(:disabled) { background:#252420; }
+  button:active:not(:disabled) { background:#35332d; }
+  button:disabled { opacity:.4; }
+  button.primary { background:var(--ink); border-color:var(--ink); color:#141412; }
+  button.primary:hover:not(:disabled) { background:#ddd9cf; }
+  button.primary:active:not(:disabled) { background:#c8c1b2; }
+  .app-header,.navigation { background:var(--surface); }
+  .brand { font:italic 28px/38px var(--serif); letter-spacing:-.035em; }
+  .brand-mark { display:none; }
+  .demo-tag,.private-tag {
+    background:#24231f; border-color:var(--line); color:var(--muted);
+    border-radius:0; font-weight:400;
+  }
+  .navigation button { font-size:13px; }
+  .navigation button[aria-current]:after { height:2px; border-radius:0; }
+  .count { background:var(--ink); color:var(--surface); border-radius:0; }
+  .demo-banner {
+    background:transparent; color:var(--muted); border-color:var(--line);
+    border-radius:0;
+  }
+  .demo-banner strong { color:var(--ink); font-weight:400; }
+  h1,h2 { font-family:var(--serif); font-weight:400; }
+  .view-heading h1,.profile-page h1 { font-size:32px; }
+  .property-list { gap:0; border-top:1px solid var(--line); }
+  .list-item {
+    background:transparent; border:0; border-bottom:1px solid var(--line);
+    border-radius:0; padding:16px 12px; box-shadow:none; justify-content:flex-start;
+  }
+  .list-item.selected { background:#201f1b; border-color:var(--line); box-shadow:none; }
+  .list-item>img,.list-photo-fallback { border-radius:0; background:#22221e; }
+  .list-photo-fallback { color:var(--muted); }
+  .list-source { color:var(--muted); font-size:10px; letter-spacing:.07em; text-transform:uppercase; }
+  .list-item-text>strong { font:400 21px/1.15 var(--serif); overflow-wrap:anywhere; }
+  .list-item-text>span:not(.list-source) { font:400 20px/1.3 var(--serif); }
+  .list-item-text>span:not(.list-source) small { font-family:MobileHanken,sans-serif; }
+  .list-header strong { font-weight:400; }
+  .source-status h2 { font:400 23px/1.2 var(--serif); }
+  .source-row h3,.section-heading h3,.costs h3 { font-weight:400; }
+  .pass,.available { color:#c8d8c4; }
+  .fail,.error { color:#ffb4ab; }
+  .unknown,.uncertain { color:#dbc48b; }
+  .property-source .available:before { background:currentColor; }
+  .property { background:var(--surface); border:0; border-radius:0; }
+  .gallery { background:#22221e; border-radius:0; }
+  .photo-fallback { background:#22221e; color:var(--muted); }
+  .photo-fallback strong { font:400 26px/1.2 var(--serif); color:var(--ink); }
+  .story-progress { height:2px; padding:0; background:none; border-radius:0; }
+  .story-progress>span { height:2px; background:#f4f3ef66; border-radius:0; }
+  .story-progress i { border-radius:0; }
+  .photo-label,.photo-controls { background:#141412b3; border-radius:0; }
+  .photo-controls button:hover:not(:disabled) { background:#35332d; }
+  .swipe-zone h2 { font:400 32px/1.15 var(--serif); overflow-wrap:anywhere; }
+  .swipe-help { color:var(--muted); }
+  .drag-label { color:#141412; border-radius:0; box-shadow:none; }
+  .price-line>strong { font:400 38px/1.1 var(--serif); }
+  .facts { display:block; padding:0; }
+  .facts>div,.costs dl>div {
+    display:flex; justify-content:space-between; align-items:baseline;
+    gap:24px; padding:12px 0; border-bottom:1px solid var(--line);
+  }
+  .facts>div:last-child,.costs dl>div:last-child { border-bottom:0; }
+  .facts dt { flex:1; margin:0; }
+  .facts dd { flex:1.3; text-align:right; font-weight:400; overflow-wrap:anywhere; }
+  .costs dd { font-weight:400; text-align:right; }
+  .bio h3 { font-weight:400; }
+  .bio>p { color:var(--ink); font:400 18px/1.85 var(--serif); max-width:70ch; overflow-wrap:anywhere; }
+  .match-details strong { font-weight:400; }
+  .source-link a { font-weight:400; }
+  .decision-bar {
+    background:var(--surface); border-radius:0; box-shadow:none;
+  }
+  .decision-bar button { min-height:48px; text-transform:uppercase; letter-spacing:.1em; font-size:12px; }
+  .empty-state,.loading-state,.signin {
+    background:var(--surface); border-radius:0; box-shadow:none;
+  }
+  .loading-state { background:#201f1b; }
+  .error { background:#2b1f1c; border-color:#69423b; border-radius:0; }
+  .skip-link { background:var(--surface); border-radius:0; }
+  .signin h1 { font-size:32px; }
+  legend { font:400 25px/1.2 var(--serif); }
+  label,.type-options>span { font-weight:400; }
+  input:not([type=checkbox]),select {
+    background:transparent; color:var(--ink); border-color:#55534b;
+    border-radius:0; caret-color:var(--focus);
+  }
+  select option { background:var(--surface); color:var(--ink); }
+  input::placeholder { color:var(--muted); }
+  input[type=checkbox] { accent-color:var(--ink); }
+  .profile-page form>button.primary { min-height:48px; }
+  /* Collection distinctions reuse the mobile palette, not its feed layout. */
+  .desktop-view-favourite .list-item-text>strong { font-size:23px; }
+  .desktop-view-dismissed .list-item { background:#1c1b1b; }
+  .desktop-view-dismissed .list-item.selected { background:#292724; }
+  .desktop-view-dismissed .list-item>img { filter:grayscale(1); }
+  .desktop-view-dismissed .list-source { color:#dbc48b; font:10px/1.7 MobileMono,monospace; }
+  .desktop-view-dismissed .list-item-text>span:not(.list-source),
+  .desktop-view-dismissed .list-item-text small { font:11px/1.65 MobileMono,monospace; }
+}

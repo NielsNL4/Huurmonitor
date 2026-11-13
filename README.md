@@ -12,7 +12,7 @@ npm run dev
 # Open http://127.0.0.1:5175/
 ```
 
-The canonical local URL is **http://127.0.0.1:5175/**. Both `npm run dev` and `npm run preview` bind only to `127.0.0.1` on port **5175**, with strict port selection: if occupied, startup fails instead of switching ports. Run dev OR preview, never both at once. Preview serves the existing production build; it does not rebuild changed configuration. Keep Supabase Auth's local Site URL and allowed redirect URL exactly `http://127.0.0.1:5175/` (not `localhost` or another port). The passwordless callback uses the current origin and path.
+The canonical local URL is **http://127.0.0.1:5175/**. Both `npm run dev` and `npm run preview` bind only to `127.0.0.1` on port **5175**, with strict port selection: if occupied, startup fails instead of switching ports. Run dev OR preview, never both at once. Preview serves the existing production build; it does not rebuild changed configuration. Keep Supabase Auth's local Site URL and allowed redirect URL exactly `http://127.0.0.1:5175/` (not `localhost` or another port). Email/password login stays inside the app; existing email-link callbacks can still be handled by the SDK.
 
 No `.env` is needed for the explicitly labelled demo. Two public-observation examples demonstrate the application. Three Gruno JPEGs are local-review-only and excluded from Git because redistribution rights are unconfirmed; a fresh checkout uses the existing missing-image fallback. See `public/photos/PROVENANCE.md`. These observations are **not current rental recommendations**. Demo decisions and profile live only in `localStorage` under `huurmonitor-demo-v1`; delete that key to reset. No analytics, source reads, Supabase calls or email in default demo mode. Opening an original advertisement is an explicit external navigation.
 
@@ -33,7 +33,7 @@ npm run worker # safely exits without contacting anything by default
 - Full descriptions, explicit price breakdown, utilities and unknown facts. One neutral saved profile drives matching; no assumed personal budget or income. Demo persistence is real browser storage, separate from cloud state.
 - Property facts include explicit wijk, housing type, original move-in wording plus an ISO calendar date when unambiguous, advertising agency and separately disclosed landlord. Agency/source is **not** assumed to be the owner. Unknowns remain labelled; no geocoding or new profile criteria. Listing email/phone contacts are not collected.
 - Source messages, cost breakdown and criterion explanations are always visible, not accordions. User rule: no decorative/useless disclosures; dropdowns only for functional selection (the profile's native selects).
-- Existing-user passwordless Supabase sign-in and private reads/profile/decisions are wired for manual cloud setup. No email/password form or signup.
+- Existing-user Supabase email/password sign-in and private reads/profile/decisions are wired for manual cloud setup. No public signup or password-reset email flow.
 - Conservative source discovery/detail parsers, failure-preserving reconciliation, meaningful-change events and transactional outbox code. These are **not proof of operational live delivery**.
 
 ## Readiness / source access
@@ -98,9 +98,9 @@ Final normalized field unknowns remain honest: 119 neighbourhoods, 136 separatel
 
 1. Create your own **free** Supabase project only after deciding to proceed. Disable public signups; manually add one Auth identity. Do not use rental-source accounts.
 2. Run `supabase/schema.sql` in that project's SQL editor once (fresh-project migration). Provision that identity's profile using the commented neutral-profile insert and its UUID. No personal profile values are pre-filled.
-3. Configure Auth Site URL and the exact local allowed redirect URL as `http://127.0.0.1:5175/`; add the final Pages URL only after separate execution authorization. Choose an email template with magic link or email OTP; the UI handles a link callback and optional code. Built-in Supabase SMTP is best effort, **owner/team-address only, around 2 emails/hour**. Do not assume public-user production mail delivery.
+3. Configure Auth Site URL and the exact local allowed redirect URL as `http://127.0.0.1:5175/`; add the final Pages URL only after separate execution authorization. The same existing owner identity must have a password; see the prerequisites below. Routine password login needs no SMTP or Auth email-template update.
 4. Copy `.env.example` to `.env`. For the browser set only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (prefer `sb_publishable_`; legacy `anon` JWT allowed). Other key types are rejected by the browser helper. **Never put a service-role/secret key in a `VITE_*` variable, frontend code, Pages assets or repository history.** Restart Vite after changing configuration.
-5. Sign in using the existing allowed email. This action intentionally requests a real Auth email. It was not executed during development. Missing provisioned profile/RLS/schema shows a recoverable error, not sample private data.
+5. Sign in using the existing owner's email and password in the app. Actual password login has not been executed during development. Missing provisioned profile/RLS/schema shows a recoverable error, not sample private data.
 6. Read-only worker access to the provisioned owner profile/five tables and anonymous read denial have passed, and all five RPCs appear in metadata. Still verify authenticated browser owner-only reads, second-user isolation and concurrency before relying on them; metadata is not RPC execution proof. No account creation, SQL mutation or schema migration is performed by the scan command.
 
 RLS is enabled on every browser-visible table. Authenticated users have owner-only SELECT; direct table writes are revoked. Only `save_profile(config)` and `set_decision(key,decision)` are browser-executable security-definer functions, bound to `auth.uid()`. Worker RPCs are service-role only with a fixed empty search path. The backend key must be scoped operationally to this personal project and explicitly targets `OWNER_USER_ID`.
@@ -108,6 +108,14 @@ RLS is enabled on every browser-visible table. Authenticated users have owner-on
 Private profile/state never enter the static bundle. Supabase's session token is stored by its browser SDK; do not use a shared browser session. Sign out before lending a device. Auth/mode/unmount boundaries invalidate pending private loads synchronously; late responses cannot render in demo or enter demo localStorage. Newer refreshes also supersede older loads. Private profile/decision completions are scope-guarded too. Refresh reloads cloud changes from another device. Realtime subscriptions are not included.
 
 Supabase Free may pause after one inactive week and has **no free backups**. Arrange your own private exports/recovery before relying on it. Data deletion: remove the Auth owner to cascade profile/home/event/outbox rows, and remove local demo storage independently. No backup, paid plan or automated export has been configured.
+
+### Existing-owner password prerequisite (manual admin step)
+
+Keep **public signups disabled**. The same existing Auth owner must have a password. Inspect Supabase Dashboard → Authentication → Users → the existing user for a password-setting action **if available**; availability has not been verified. If no such action is present, first password setup requires a separately authorized trusted-admin operation. This task performs neither. Never delete/recreate the user: its UUID owns the saved profile and rental data. Never share a password in chat or put it in repository/environment files.
+
+Routine login uses `signInWithPassword` and sends no Auth email; no custom SMTP or Auth template update is required for it. First password setting and actual login remain **unverified**. A reset-email route is not an SMTP-free substitute and is not implemented or authorized here. The worker's Gmail rental digests and their configuration are separate and unchanged.
+
+The app normalizes email by trimming/lowercasing, passes the password exactly as entered, and clears the password field after submission and auth/mode/reset boundaries. Passwords never enter helper state, app storage or logs. Duplicate in-flight submissions are blocked and failures use generic wording without automatic retries. Revision guards suppress stale UI completions; they do **not** cancel backend SDK authentication. The SDK's `onAuthStateChange` remains session authority and existing session persistence is unchanged. After separately authorized setup, verify actual login, incorrect-password handling, reload/session persistence and signout on the intended devices. Mocked helper tests are not device or provider evidence.
 
 ## Matching and meaningful changes
 

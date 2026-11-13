@@ -10,6 +10,7 @@ import { priceDisplay } from '../shared/price-display';
 import { PropertyMap } from './PropertyMap';
 import { cbsAttribution, cbsDocumentation, cbsLicence, currentOfficialGeography } from '../shared/official-geography';
 import { MobileRoot } from './MobileRoot';
+import { createEmailAuth, initialEmailAuth } from './email-auth';
 
 type View = 'new' | 'favourite' | 'dismissed' | 'profile';
 const labels: Record<View, string> = { new: 'Nieuw', favourite: 'Favorieten', dismissed: 'Afgewezen', profile: 'Profiel' };
@@ -122,7 +123,13 @@ export default function App() {
   const [runs, setRuns] = useState<SourceRun[]>(() => !cloud ? demoRuns : []), [delivery, setDelivery] = useState('');
   const [view, setView] = useState<View>('new'), [selected, setSelected] = useState(''), [busy, setBusy] = useState(false), [loading, setLoading] = useState(false);
   const [error, setError] = useState(configurationError || ''), [notice, setNotice] = useState(''), [undo, setUndo] = useState<{ key: string; decision: Decision } | null>(null);
-  const [email, setEmail] = useState(''), [otp, setOtp] = useState(''), [sent, setSent] = useState(false);
+  const [emailAuth, setEmailAuth] = useState(initialEmailAuth);
+  const [emailActions] = useState(() => createEmailAuth(cloud?.auth ?? null, setEmailAuth));
+  const passwordInput = useRef<HTMLInputElement>(null);
+  function resetEmailAuth(email = '') {
+    if (passwordInput.current) passwordInput.current.value = '';
+    emailActions.reset(email);
+  }
   const [authRevision, setAuthRevision] = useState(0);
   const reading = useRef<HTMLElement>(null);
   const privateScope = useRef(createPrivateScope());
@@ -148,12 +155,13 @@ export default function App() {
   useEffect(() => {
     if (!cloud) return;
     const { data } = cloud.auth.onAuthStateChange((_event, next) => {
+      resetEmailAuth();
       privateScope.current.switchOwner(mode.current !== 'demo' && next ? next.user.id : null);
       setSession(next);
       setAuthRevision(revision => revision + 1);
       if (mode.current !== 'demo') { clearPrivateState(); mode.current = next ? 'private' : 'signedout'; setDemo(false); }
     });
-    return () => { privateScope.current.switchOwner(null); data.subscription.unsubscribe(); };
+    return () => { emailActions.invalidate(); privateScope.current.switchOwner(null); data.subscription.unsubscribe(); };
   }, []);
   useEffect(() => { if (session && !demo) void load(session.user.id); }, [session, demo, authRevision]);
   useEffect(() => { if (demo) { try { localStorage.setItem('huurmonitor-demo-v1', JSON.stringify({ homes, profile })); } catch { setError('Demo kon niet lokaal worden opgeslagen. Je browser blokkeert opslag.'); } } }, [homes, profile, demo]);
@@ -193,26 +201,35 @@ export default function App() {
     } catch (e) { if (!operation || operation.current()) setError(`Profiel niet opgeslagen: ${(e as {message:string}).message}`); }
     finally { if (!operation || operation.current()) setBusy(false); }
   }
-  async function signIn(e: FormEvent) {
-    e.preventDefault(); if (!cloud) return; setBusy(true); setError('');
-    const result = sent && otp ? await cloud.auth.verifyOtp({ email, token: otp, type: 'email' }) : await cloud.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname } });
-    setBusy(false); if (result.error) setError(result.error.message); else { setSent(true); setNotice('Als dit adres is toegelaten, ontvang je een inloglink of code. Beperkte mailcapaciteit: wacht voor je opnieuw probeert.'); }
+  function signIn(e: FormEvent) {
+    e.preventDefault();
+    const input = passwordInput.current;
+    if (!input) return;
+    void emailActions.signIn(input.value);
+    input.value = '';
   }
-  const enterDemo = () => { privateScope.current.switchOwner(null); mode.current = 'demo'; clearPrivateState(); const saved = readDemo(); setDemo(true); setHomes(saved.homes); setProfile(saved.profile); setRuns(demoRuns); setView('new'); };
-  const leaveDemo = () => { privateScope.current.switchOwner(session?.user.id ?? null); mode.current = session ? 'private' : 'signedout'; clearPrivateState(); setDemo(false); };
-  const signOut = () => { privateScope.current.switchOwner(null); mode.current = 'signedout'; clearPrivateState(); setSession(null); setDemo(false); void cloud?.auth.signOut().then(({ error }) => { if (error && mode.current === 'signedout') setError(`Uitloggen niet bevestigd: ${error.message}. Sluit deze browser of probeer opnieuw voordat je het apparaat deelt.`); }); };
+  const enterDemo = () => { resetEmailAuth(); privateScope.current.switchOwner(null); mode.current = 'demo'; clearPrivateState(); const saved = readDemo(); setDemo(true); setHomes(saved.homes); setProfile(saved.profile); setRuns(demoRuns); setView('new'); };
+  const leaveDemo = () => { resetEmailAuth(); privateScope.current.switchOwner(session?.user.id ?? null); mode.current = session ? 'private' : 'signedout'; clearPrivateState(); setDemo(false); };
+  const signOut = () => { resetEmailAuth(); privateScope.current.switchOwner(null); mode.current = 'signedout'; clearPrivateState(); setSession(null); setDemo(false); void cloud?.auth.signOut().then(({ error }) => { if (error && mode.current === 'signedout') setError('Uitloggen niet bevestigd. Sluit deze browser of probeer opnieuw voordat je het apparaat deelt.'); }); };
   const selectHome = (key: string) => { setSelected(key); };
   const totalNew = displayed.filter(h => h.decision === 'new' && h.evaluation.eligible).length;
   if (mobile && (demo || session)) return <MobileRoot view={view} switchView={switchView} homes={displayed} active={active} filtered={filtered} selectHome={selectHome} profile={profile} demo={demo} busy={busy} loading={loading} error={error} notice={notice} undo={undo} changeDecision={(key,decision,remember) => void changeDecision(key,decision,remember)} save={p => void saveProfile(p)} runs={runs} delivery={delivery} Gallery={Gallery} refresh={!demo && session ? () => void load(session.user.id) : undefined} accountActions={<>{session && !demo && <button onClick={signOut}>Uitloggen</button>}{cloud && demo && <button onClick={leaveDemo}>Naar privéprofiel</button>}</>}/>;
   return <>
     <a className="skip-link" href="#main">Naar inhoud</a><header className="app-header"><a className="brand" href="#" onClick={e => { e.preventDefault(); switchView('new'); }}><span className="brand-mark"><Icon name="home" size={23}/></span>Huurmonitor</a><div className="account">{demo ? <span className="demo-tag">Demomodus</span> : <span className="private-tag">Privé</span>}{session && !demo && <button onClick={signOut}>Uitloggen</button>}{cloud && demo && <button onClick={leaveDemo}>Naar privéprofiel</button>}</div></header>
     <nav className="navigation" aria-label="Hoofdnavigatie">{(Object.keys(labels) as View[]).map(v => <button key={v} onClick={() => switchView(v)} aria-current={view === v ? 'page' : undefined}><Icon name={v}/><span>{labels[v]}</span>{v === 'new' && totalNew > 0 && <span className="count">{totalNew}</span>}</button>)}</nav>
-    <main id="main" className="app-main" ref={reading} tabIndex={-1}>
+    <main id="main" className={`app-main desktop-view-${view}`} ref={reading} tabIndex={-1}>
       {demo && <div className="demo-banner"><strong>Rustig uitproberen.</strong> Voorbeeldwoningen, geen live aanbod. Keuzes blijven alleen in deze browser.</div>}
       {error && <div className="error" role="alert">{error}</div>}
       <div className="announcement" role="status" aria-live="polite">{notice}{undo && <button disabled={busy} onClick={() => void changeDecision(undo.key, undo.decision, false)}><Icon name="undo" size={16}/>Ongedaan maken</button>}</div>
       {!demo && session && runs.some(r => r.status === 'failed') && <div className="error" role="status">Een of meer bronnen konden niet worden gelezen. Eerdere woningen blijven bewaard; dit overzicht is mogelijk niet actueel. Bekijk Bronnen & actualiteit.</div>}
-      {!demo && !session ? <section className="signin"><h1>Je woningzoektocht, privé.</h1><p>Log in met je bestaande, door jou toegelaten Supabase-account. Er worden geen nieuwe accounts aangemaakt.</p><form onSubmit={signIn}><label>E-mailadres<input type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)}/></label>{sent && <label>Inlogcode (als je mail een code bevat)<input inputMode="numeric" autoComplete="one-time-code" value={otp} onChange={e => setOtp(e.target.value)}/></label>}<button className="primary" disabled={busy || !cloud}>{busy ? 'Even wachten…' : sent && otp ? 'Inlogcode bevestigen' : sent ? 'Nieuwe inloglink aanvragen' : 'Stuur mij een inloglink'}</button></form><p>Deze knop verstuurt een echte authenticatiemail bij geconfigureerde Supabase. Ingebouwde SMTP: alleen eigenaar/team, maximaal circa 2 per uur, best effort.</p><button onClick={enterDemo}>Eerst de demo bekijken</button></section> : view === 'profile' ? <ProfileForm value={profile} busy={busy} demo={demo} save={p => void saveProfile(p)}/> : <>
+      {!demo && !session ? <section className="signin"><h1>Inloggen</h1><p>Gebruik het e-mailadres en wachtwoord van je bestaande account.</p>
+        <form onSubmit={signIn} aria-busy={emailAuth.busy}>
+          <label>E-mailadres<input type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required disabled={emailAuth.busy} value={emailAuth.email} onChange={e => resetEmailAuth(e.target.value)}/></label>
+          <label>Wachtwoord<input ref={passwordInput} type="password" autoComplete="current-password" required disabled={emailAuth.busy}/></label>
+          <button className="primary" type="submit" disabled={emailAuth.busy || !cloud}>{emailAuth.busy ? 'Inloggen…' : 'Inloggen'}</button>
+          {emailAuth.error && <p className="error" role="alert">{emailAuth.error}</p>}
+        </form>
+        <button onClick={enterDemo}>Eerst de demo bekijken</button></section> : view === 'profile' ? <ProfileForm value={profile} busy={busy} demo={demo} save={p => void saveProfile(p)}/> : <>
         <div className="view-heading"><div><h1>{labels[view] === 'Nieuw' ? 'Nieuwe matches' : labels[view]}</h1><p>{view === 'new' ? 'Bekijk één woning tegelijk. Bewaar wat bij je past.' : view === 'favourite' ? 'Jouw bewaarde woningen. Ook als feiten of beschikbaarheid veranderen.' : 'Niet voor nu. Je kunt elke woning herstellen.'}</p></div>{!demo && session && <button disabled={loading} onClick={() => void load(session.user.id)}><Icon name="refresh"/>{loading ? 'Laden…' : 'Vernieuwen'}</button>}</div>
         <div className="workspace"><aside className="listing-column"><div className="list-header"><strong>{filtered.length} {view === 'new' ? demo ? 'passende voorbeelden' : 'matches' : 'woningen'}</strong><button className="text-button" onClick={() => switchView('profile')}>Zoekprofiel</button></div><div className="property-list">{filtered.map(h => { const price = priceDisplay(h.listing); return <button key={h.listing.key} className={`list-item ${active?.listing.key === h.listing.key ? 'selected' : ''}`} onClick={() => selectHome(h.listing.key)} aria-pressed={active?.listing.key === h.listing.key}>{h.listing.photos[0] ? <img src={h.listing.photos[0]} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden'; }}/>: <span className="list-photo-fallback"><Icon name="home" size={24}/></span>}<span className="list-item-text"><span className="list-source">{sources[h.listing.source]} · {h.listing.type || 'Type onbekend'}</span><strong>{h.listing.title}</strong><span>{money(price.amount)} <small>{price.advertisedFallback ? `${price.label} · ${price.caveat}` : 'bekend / mnd'}</small></span><small>{h.listing.area === null ? 'Oppervlak onbekend' : `${h.listing.area.toLocaleString('nl-NL')} m²`} · {h.listing.city || 'Locatie onbekend'}</small>{h.evaluation.verdict !== 'pass' && <small className="uncertain">{h.evaluation.verdict === 'unknown' ? 'Vereiste gegevens onzeker' : 'Voldoet nu niet'}</small>}</span></button>; })}</div><SourceStatus runs={runs} demo={demo} delivery={delivery}/></aside>
         <div className="detail-column">{loading && !homes.length ? <div className="loading-state" aria-busy="true">Privéwoningen laden…</div> : active ? <><div className="property-pager"><span>{activeIndex + 1} van {filtered.length} {demo ? 'voorbeelden' : 'woningen'}</span><div><button disabled={activeIndex === 0} onClick={() => selectHome(filtered[activeIndex - 1].listing.key)} aria-label="Vorige woning"><Icon name="prev"/></button><button disabled={activeIndex === filtered.length - 1} onClick={() => selectHome(filtered[activeIndex + 1].listing.key)} aria-label="Volgende woning"><Icon name="next"/></button></div></div><Property key={active.listing.key} home={active} profile={profile} demo={demo} busy={busy} onDecision={d => void changeDecision(active.listing.key,d)}/></> : <div className="empty-state"><Icon name={view} size={36}/><h2>{view === 'new' ? 'Je bent bij met je matches' : view === 'favourite' ? 'Nog geen favorieten' : 'Nog niets afgewezen'}</h2><p>{view === 'new' ? 'Dit betekent niet dat er geen aanbod is. Controleer bronstatus en je zoekprofiel; onbekende vereiste gegevens worden standaard niet toegelaten.' : 'Je keuzes verschijnen hier. Bij Nieuw kun je woningen bekijken en bewaren of afwijzen.'}</p><button onClick={() => switchView(view === 'new' ? 'profile' : 'new')}>{view === 'new' ? 'Bekijk zoekprofiel' : 'Naar nieuwe matches'}</button></div>}</div></div>

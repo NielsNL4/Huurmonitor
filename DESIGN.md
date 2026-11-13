@@ -61,8 +61,8 @@ components:
 
 At **≤760px only**, the five user-supplied Stitch screenshots govern their own
 screen, followed by their HTML, then the exported Noord Archief DESIGN. This
-overrides the daylight mobile rules below, **not desktop**. Desktop keeps the
-incumbent light green/petrol palette, system typography, actions and split view.
+overrides the daylight mobile rules below. The later approved desktop adaptation
+below supersedes the original keep-light desktop restriction, not its split view.
 
 - New: `#141412`, `#f4f3ef`, fine `#292826` dividers; Hanken Grotesk and Newsreader.
   A 56px italic masthead, source strip and full-bleed 4:5 story precede the real
@@ -97,6 +97,43 @@ no pixel-perfect or unshown responsive claim. Unshown empty/loading/error/auth
 states inherit the world. Self-hosted fonts and verbatim OFLs: `public/fonts/`.
 Reference exports remain private, unmodified, outside application assets. Only
 existing actual listing/demo photography is used; the demo can lack source photos.
+
+## Approved desktop editorial adaptation · November 2026
+
+The user requested the mobile design on desktop and explicitly retained the
+side-by-side list/detail layout. At **>760px**, `src/desktop.css` overrides the
+historical daylight tokens recorded below: canvas `#141412`, ink `#f4f3ef`, muted
+`#aaa8a1`, dividers `#292826`, brass focus `#dbc48b`. Reuse the self-hosted mobile
+Hanken/Newsreader faces and Vite's base-aware font URLs; titles/prices are regular
+serif, the wordmark italic. No white/petrol panels, rounded shells or shadows.
+
+Keep desktop header/account and horizontal navigation, incumbent 1280px canvas,
+350px list/28px gap (existing 1050px/1500px adaptations), bounded reading scroll,
+380px gallery cap and reserved decision strip. Rows are flat and divided, facts
+are directly visible divided rows, full description uses 18px Newsreader. Equal
+48px square outlined/filled decisions retain all existing semantics. Favourites
+use `#121212`; archive uses `#131313`, `#1c1b1b` rows, grayscale thumbnails and
+Geist/Mono/brass source metadata. Neither becomes a mobile feed. Profile/sign-in
+retain native inputs, paired fields and explicit save in the dark flat world.
+All content, source/CBS/cost unknowns, verdict labels, map loading/privacy and
+attribution remain unchanged. Mobile CSS, fonts, navigation and safe areas are
+unchanged. Desktop theme-color is `#141412`; no reference imagery ships.
+
+Verification scope: isolated local demo at 1440px and 390px across four existing
+destinations, unchanged-mobile comparison, targeted detector and scoped diff
+inspection. No full suite/build/lint, private data or cloud operations required.
+
+Local Chromium evidence: `.impeccable/review/desktop-adapt-*.png` and
+`desktop-adapt-evidence.json` (ignored development artifacts). At 1440×1000,
+all four destinations had no horizontal overflow; list/detail remained
+350px/838px, gallery 380px, decisions 48px with reading-region clearance.
+Four 390×844 mobile captures were byte-identical before/after (New empty state,
+populated favourites/archive and profile); the existing `stitch-new.png` remains
+the populated mobile-story reference. One row-alignment correction followed.
+The targeted detector reported advisory palette/type-ramp drift against the
+historical frontmatter, not blockers; the approved overrides above are intentional.
+No real-device/Safari, authenticated/private, live map, production build or
+additional desktop-width rendering claim is made.
 
 # Design System: Huurmonitor
 

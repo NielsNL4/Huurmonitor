@@ -1,4 +1,19 @@
 # Property review · src/App.tsx
+## Approved desktop adaptation (supersedes keep-desktop-unchanged below)
+User requested the mobile design on desktop and confirmed KEEP SIDE-BY-SIDE
+list/detail. Above 760px only, use the actual mobile captures/current code as
+authority: dark editorial Hanken/Newsreader, italic masthead, offwhite controls,
+flat divided rows/facts, square capped gallery, 18px serif full description.
+Preserve desktop header/account/navigation, canvas/column breakpoints, bounded
+scroll and reserved equal 48px decision strip. Favourites nearblack; archive
+Geist/Mono/brass metadata, dark rows and grayscale thumbs, never a mobile feed.
+Keep native profile/sign-in inputs, all labels/facts/unknowns/source/CBS/map
+privacy/attribution and behavior. No new functionality or mobile changes.
+Verification budget for this adaptation replaces the older mobile budget below:
+one isolated local demo batch at 1440 desktop/390 mobile over four destinations,
+before/after mobile evidence, one targeted detector, final scoped diff inspection;
+at most one consequential correction batch. No suite/build/lint or cloud reads.
+
 ## Mobile reference contract (supersedes daylight mobile direction below)
 At ≤760px, reproduce each supplied Stitch screen independently using the accepted
 five-screen brief. Actual PNGs were opened, then HTML read. Work at 390 CSS px;
