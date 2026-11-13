@@ -37,7 +37,7 @@ function facts(listing: Listing) {
   };
 }
 export function digestText(events: Event[]) {
-  return ['Huurmonitor · Groningen', '', intro, '', ...events.map(event => {
+  return ['Huurmonitor', '', intro, '', ...events.map(event => {
     const fact = facts(event.listing);
     return [event.listing.title, `Wijziging: ${event.reason}`, fact.price, fact.caveat,
       `Wijk volgens advertentie: ${fact.neighbourhood}`, `Oppervlakte: ${fact.area}`,
@@ -67,7 +67,7 @@ function listingHtml(event: Event) {
   </td></tr>`;
 }
 export function digestHtml(events: Event[]) {
-  return `<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Huurmonitor · Groningen</title></head>
+  return `<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Huurmonitor</title></head>
   <body bgcolor="#141412" style="margin:0; padding:0; background-color:#141412; color:#f4f3ef;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#141412" style="width:100%; background-color:#141412; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;"><tr><td align="center" valign="top">
       <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td><![endif]-->

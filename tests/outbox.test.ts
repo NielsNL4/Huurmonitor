@@ -70,8 +70,17 @@ test('email reuses headline fallback semantics rather than relabelling headline 
   }
   item.listing.rent.headlineConflict=true;
   assert.match(digestText([item]),/Onbekend/);assert.doesNotMatch(digestText([item]),/805/);
-  item.listing.source='solide';item.listing.rent.headlineConflict=false;
-  assert.match(digestText([item]),/Onbekend/);
+  for(const source of ['solide','maxx'] as const){
+    item.listing.source=source;item.listing.rent.headlineConflict=false;
+    for(const body of [digestHtml([item]),digestText([item])]){
+      assert.match(body,/Geadverteerde huurprijs/);assert.match(body,/805/);assert.match(body,/kostenbasis niet bevestigd/);assert.doesNotMatch(body,/bekend per maand/);
+    }
+    item.listing.rent.headline=null;item.listing.description='De kale huurprijs bedraagt €730,65 per maand, exclusief nutsvoorzieningen.';
+    for(const body of [digestHtml([item]),digestText([item])]){
+      assert.match(body,/Geadverteerde kale huurprijs/);assert.match(body,/730,65/);assert.match(body,/kostenbasis niet bevestigd/);assert.doesNotMatch(body,/bekend per maand/);
+    }
+    item.listing.rent.headline=80500;
+  }
 });
 test('email opt-in gate never contacts provider when disabled', async () => {
   await assert.rejects(sendDigest('id', [], 'nobody@example.invalid', {}), /disabled/);

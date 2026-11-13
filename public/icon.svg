@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
+  <!-- Derived from the existing home mark in src/App.tsx; source for the PNG icons. -->
+  <path fill="#141412" d="M0 0h180v180H0z"/>
+  <path d="M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9" transform="translate(30 30) scale(5)" fill="none" stroke="#f4f3ef" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -35,9 +35,9 @@ test('Gruno full description/status/photo/date fields remain scoped and preserve
  const fallback=parse(page()+'<div id="object-photos"><a href="https://example.invalid/source.jpg">foto</a></div>');assert.deepEqual(fallback.photos,['https://example.invalid/source.jpg']);assert.equal(fallback.moveIn,null);assert.equal(fallback.moveInDate,null);
  const conflict=parse(page({extra:'<tr><td>Status</td><td>Verhuurd</td></tr><tr><td>Wijk</td><td>Wijk A</td></tr><tr><td>Wijk</td><td>Wijk B</td></tr><tr><td>Aanvaarding</td><td>01-12-2026</td></tr><tr><td>Aanvaarding</td><td>01-01-2027</td></tr>'}));assert.equal(conflict.available,false);assert.equal(conflict.neighbourhood,null);assert.equal(conflict.moveInDate,null);assert.match(conflict.moveIn!,/01-01-2027/);
 });
-test('Gruno UI fallback neither changes eligibility nor notifies/resurfaces; other sources unchanged',()=>{
+test('advertised UI fallback neither changes eligibility nor notifies/resurfaces',()=>{
  const l=parse(page()),before=structuredClone(l);
  for(const basis of ['base','knownMonthly']as const){const p={...neutralProfile,basis,maxBudget:100000};const evaluation=evaluate(l,p);assert.equal(evaluation.verdict,'unknown');assert.equal(evaluation.eligible,false);priceDisplay(l);assert.deepEqual(evaluate(l,p),evaluation);const home=decide(reconcile([],[l],p).homes[0],'dismissed','fixture',p);assert.equal(reconcile([home],[],p).events.length,0);assert.equal(reconcile([home],[],p).homes[0].decision,'dismissed');}
- assert.deepEqual(l,before);for(const source of ['solide','maxx']as const)assert.equal(priceDisplay({...l,source}).amount,null);
+  assert.deepEqual(l,before);for(const source of ['solide','maxx']as const)assert.equal(priceDisplay({...l,source}).amount,80500);
  const confirmed={...l,rent:{...l.rent,knownMonthly:90000}};assert.equal(priceDisplay(confirmed).amount,90000);assert.equal(priceDisplay(confirmed).advertisedFallback,false);
 });
