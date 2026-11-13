@@ -1,13 +1,10 @@
 import type { Event } from '../shared/model';
-import { money } from '../shared/model';
+import { digestHtml, digestText } from './email-renderer';
+export { digestHtml, digestText } from './email-renderer';
 import { createHash } from 'node:crypto';
 import nodemailer from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import type Mail from 'nodemailer/lib/mailer';
-export function digestText(events: Event[]) {
-  return ['Huurmonitor · Groningen', '', 'Wijzigingen die nu aan je opgeslagen profiel voldoen. Controleer beschikbaarheid en bijkomende kosten bij de bron.', '',
-    ...events.map(e => `${e.reason}: ${e.listing.title}\n${money(e.listing.rent.knownMonthly)} bekende maandlasten (geen all-in garantie)\n${e.listing.url}\n`)].join('\n');
-}
 export function retryKey(digestId: string) { return `huurmonitor-digest/${digestId}`; }
 export type EmailTransport = 'gmail' | 'resend';
 export function singleEmail(value: string | undefined): value is string {
@@ -46,7 +43,7 @@ export async function sendDigest(id: string, events: Event[], recipient: string,
         logger:false,debug:false,
       });
       const info = await smtp.sendMail({
-        from:env.GMAIL_USER!,to:[recipient],envelope:{from:env.GMAIL_USER!,to:[recipient]},subject,text:digestText(events),
+        from:env.GMAIL_USER!,to:[recipient],envelope:{from:env.GMAIL_USER!,to:[recipient]},subject,text:digestText(events),html:digestHtml(events),
         messageId:`<huurmonitor-${createHash('sha256').update(id).digest('hex')}@${env.GMAIL_USER!.split('@')[1]}>`,
         disableFileAccess:true,disableUrlAccess:true,
       });
@@ -59,7 +56,7 @@ export async function sendDigest(id: string, events: Event[], recipient: string,
   let response: Response;
   try { response = await (dependencies.resend ?? fetch)('https://api.resend.com/emails', {
     method: 'POST', headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json', 'Idempotency-Key': retryKey(id) },
-    body: JSON.stringify({ from: env.EMAIL_FROM, to: [recipient], subject, text: digestText(events) }),
+    body: JSON.stringify({ from: env.EMAIL_FROM, to: [recipient], subject, text: digestText(events), html: digestHtml(events) }),
     signal: AbortSignal.timeout(30000),
   }); } catch { throw new Error('Resend request unconfirmed; same digest key required on retry'); }
   if (!response.ok) throw new Error(`Resend HTTP ${response.status}; same digest key required on retry`);

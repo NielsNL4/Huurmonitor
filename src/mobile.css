@@ -6,6 +6,10 @@
 @font-face{font-family:MobileMono;src:url('/fonts/JetBrainsMono[wght].ttf') format('truetype');font-style:normal;font-weight:100 800;font-display:swap}
 
 @media(max-width:760px){
+  /* Paint the Safari canvas too, overriding the later light :root rule. */
+  html:root,body,#root{background:#141412;color:#f4f3ef;color-scheme:dark}
+  /* Bottom inset is already owned by .m-navigation; reserve only the top here. */
+  .mobile-root{padding-top:env(safe-area-inset-top)}
   body:has(.signin){--ink:#f4f3ef;--muted:#aaa8a1;--accent:#f4f3ef;--line:#292826;--surface:#141412;--focus:#dbc48b;background:#141412;color:#f4f3ef;font-family:MobileHanken,sans-serif;color-scheme:dark}
   body:has(.signin) .app-header,body:has(.signin) .navigation,body:has(.signin) .signin{background:#141412;color:#f4f3ef}
   body:has(.signin) .brand{font:italic 22px MobileNewsreader,Georgia,serif}
