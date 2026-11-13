@@ -1,19 +1,20 @@
-import type { Listing, OfficialGeography, SourceLocation } from '../shared/model';
-import { cbsYear, cbsVersion, currentOfficialGeography, geographyKey, sourcePoint, validOfficialNames } from '../shared/official-geography';
-import { validCoordinates } from '../shared/location';
+import type { EffectiveLocation, Listing, OfficialGeography } from '../shared/model';
+import { cbsYear, cbsVersion, currentOfficialGeography, geographyKey, validOfficialNames } from '../shared/official-geography';
+import { effectiveLocation, validCoordinates, validEffectivePoint } from '../shared/location';
+import { readPDOKJson } from './geocoding';
 
 const endpoint = 'https://api.pdok.nl/cbs/wijken-en-buurten-2026/ogc/v1/collections/buurten/items';
 const day = 86_400_000;
 type Status = OfficialGeography['status'];
 type Point = [number,number];
 
-export function geographyUrl(point: SourceLocation) {
-  if (!sourcePoint(point)) throw new Error('A valid source point is required');
+export function geographyUrl(point: EffectiveLocation) {
+  if (!validEffectivePoint(point)) throw new Error('A valid location is required');
   const url = new URL(endpoint);
   url.search = new URLSearchParams({f:'json',limit:'2','filter-lang':'cql2-text',filter:`S_INTERSECTS(geometry,POINT(${point.lon} ${point.lat}))`}).toString();
   return url.href;
 }
-function empty(point: SourceLocation, at: string, status: Status): OfficialGeography {
+function empty(point: EffectiveLocation, at: string, status: Status): OfficialGeography {
   return {provider:'pdok-cbs',year:cbsYear,version:cbsVersion,input:{...point},retrievedAt:at,lastAttemptAt:at,lastAttemptStatus:status === 'error' || status === 'invalid-response' ? 'error' : 'ok',status,buurt:null,wijk:null,municipality:null};
 }
 // GeoJSON defaults to CRS84 (lon,lat). Independently check returned polygons so a
@@ -45,9 +46,9 @@ function geometryRelation(geometry: any, point: Point): ReturnType<typeof ringRe
   }
   return boundary ? 'boundary' : inside ? 'inside' : 'outside';
 }
-export function parseOfficialGeography(body: unknown, point: SourceLocation, at: string): OfficialGeography {
+export function parseOfficialGeography(body: unknown, point: EffectiveLocation, at: string): OfficialGeography {
   const result = empty(point,at,'invalid-response'), data = body as any;
-  if (!sourcePoint(point) || !data || data.type !== 'FeatureCollection' || !Array.isArray(data.features) || !Number.isInteger(data.numberReturned) || data.numberReturned !== data.features.length || data.crs || (data.links !== undefined && (!Array.isArray(data.links) || data.links.some((link: any)=>!link || typeof link !== 'object')))) return result;
+  if (!validEffectivePoint(point) || !data || data.type !== 'FeatureCollection' || !Array.isArray(data.features) || !Number.isInteger(data.numberReturned) || data.numberReturned !== data.features.length || data.crs || (data.links !== undefined && (!Array.isArray(data.links) || data.links.some((link: any)=>!link || typeof link !== 'object')))) return result;
   if (data.features.length > 1 || (typeof data.numberMatched === 'number' && data.numberMatched > 1) || data.links?.some((link: any)=>link.rel === 'next')) return empty(point,at,'ambiguous');
   if (!data.features.length) return empty(point,at,'no-match');
   const feature = data.features[0], p = feature?.properties;
@@ -61,13 +62,6 @@ export function parseOfficialGeography(body: unknown, point: SourceLocation, at:
   return {...named,lastAttemptStatus:'ok'};
 }
 
-async function readPDOK(url: string): Promise<unknown> {
-  const response = await fetch(url,{headers:{Accept:'application/geo+json, application/json','User-Agent':'Huurmonitor-personal/0.1'},redirect:'error',signal:AbortSignal.timeout(15_000)});
-  if (!response.ok || !/\b(?:geo\+)?json\b/i.test(response.headers.get('content-type') ?? '')) throw new Error('PDOK response unavailable');
-  const text = await response.text();
-  if (text.length > 2_000_000) throw new Error('PDOK response too large');
-  return JSON.parse(text);
-}
 function reusable(value: OfficialGeography | null, now: number): value is OfficialGeography {
   if (!value || !['known','no-match','ambiguous','water','invalid-response','error'].includes(value.status)) return false;
   const retrieved = Date.parse(value.retrievedAt), attempted = Date.parse(value.lastAttemptAt);
@@ -79,23 +73,25 @@ function fresh(value: OfficialGeography, now: number) {
   return now-Date.parse(value.retrievedAt) < (value.status === 'known' ? 30 : 7)*day;
 }
 
-interface Options { at?: string; read?: (url: string)=>Promise<unknown>; pause?: (ms: number)=>Promise<void> }
+interface Options { at?: string; read?: (url: string)=>Promise<unknown>; pause?: (ms: number)=>Promise<void>; clock?: ()=>number; deadline?: number; shouldStop?: ()=>boolean; coordinateCache?: boolean }
 export async function enrichOfficialGeography(listings: Listing[], stored: Listing[], options: Options = {}) {
   const at = options.at ?? new Date().toISOString(), now = Date.parse(at);
-  const read = options.read ?? readPDOK, pause = options.pause ?? (ms=>new Promise(resolve=>setTimeout(resolve,ms)));
+  const read = options.read ?? readPDOKJson, pause = options.pause ?? (ms=>new Promise(resolve=>setTimeout(resolve,ms)));
+  const clock = options.clock ?? Date.now;
+  const cacheKey = (point: EffectiveLocation | null) => options.coordinateCache && point ? `${cbsYear}:${cbsVersion}:${point.lon},${point.lat}` : geographyKey(point);
   const cache = new Map<string,OfficialGeography>(), resolved = new Map<string,OfficialGeography>();
-  const stats = {withSourcePoint:0,missingSourcePoint:0,uniquePoints:0,queries:0,cacheHits:0,duplicatePoints:0,refreshFailures:0,deferred:0,known:0,'no-match':0,ambiguous:0,water:0,'invalid-response':0,error:0};
+  const stats = {withPoint:0,missingPoint:0,uniquePoints:0,queries:0,cacheHits:0,duplicatePoints:0,refreshFailures:0,deferred:0,known:0,'no-match':0,ambiguous:0,water:0,'invalid-response':0,error:0};
   for (const listing of [...stored,...listings]) {
-    const value = currentOfficialGeography(listing), key = geographyKey(listing.location);
+    const value = currentOfficialGeography(listing), key = cacheKey(effectiveLocation(listing));
     if (!key || !reusable(value,now)) continue;
     const old = cache.get(key);
     if (!old || (value.status === 'known' && old.status !== 'known') || ((value.status === 'known') === (old.status === 'known') && Date.parse(value.lastAttemptAt)>Date.parse(old.lastAttemptAt))) cache.set(key,value);
   }
   const enriched: Listing[] = []; let transportFailed = false;
   for (const listing of listings) {
-    const point = sourcePoint(listing.location), key = geographyKey(point);
-    if (!point || !key) { stats.missingSourcePoint++; enriched.push({...listing,officialGeography:null}); continue; }
-    stats.withSourcePoint++;
+    const point = effectiveLocation(listing), key = cacheKey(point);
+    if (!point || !key) { stats.missingPoint++; enriched.push({...listing,officialGeography:null}); continue; }
+    stats.withPoint++;
     let value = resolved.get(key);
     if (value) stats.duplicatePoints++;
     else {
@@ -103,8 +99,8 @@ export async function enrichOfficialGeography(listings: Listing[], stored: Listi
       const cached = cache.get(key);
       if (cached && fresh(cached,now)) { stats.cacheHits++; value=cached; }
       else {
+        if (transportFailed || options.shouldStop?.() || (options.deadline !== undefined && clock()+17_000 > options.deadline)) { stats.deferred++; enriched.push({...listing,officialGeography:cached ? {...cached,input:{...point}} : null}); continue; }
         try {
-          if (transportFailed) { stats.deferred++; throw new Error('PDOK circuit stopped for this pass'); }
           if (stats.queries) await pause(2000);
           stats.queries++;
           value=parseOfficialGeography(await read(geographyUrl(point)),point,at);
@@ -122,7 +118,7 @@ export async function enrichOfficialGeography(listings: Listing[], stored: Listi
       resolved.set(key,value);
     }
     stats[value.status]++;
-    enriched.push({...listing,officialGeography:structuredClone(value)});
+    enriched.push({...listing,officialGeography:structuredClone({...value,input:{...point}})});
   }
   return {listings:enriched,stats};
 }

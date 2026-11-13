@@ -74,8 +74,8 @@ test('Failure retains expired valid same-point cache, backs off for a day and st
   const past='2026-10-01T12:00:00Z',stored={...listing(),officialGeography:parseOfficialGeography(response(),point,past)};let reads=0;
   const other={...listing('other'),location:{...point,lon:6.58}};
   const failed=await enrichOfficialGeography([listing(),other],[stored],{...offline,read:async()=>{reads++;throw Error('timeout');}});
-  assert.equal(reads,1);assert.equal(failed.stats.deferred,1);assert.equal(failed.listings[0].officialGeography?.status,'known');assert.equal(failed.listings[0].officialGeography?.retrievedAt,past);assert.equal(failed.listings[0].officialGeography?.lastAttemptStatus,'error');assert.equal(failed.listings[1].officialGeography?.status,'error');
-  const retry=await enrichOfficialGeography(failed.listings,[],{...offline,at:'2026-11-12T18:00:00Z',read:async()=>{throw Error('must back off');}});assert.equal(retry.stats.queries,0);assert.equal(retry.stats.cacheHits,2);
+  assert.equal(reads,1);assert.equal(failed.stats.deferred,1);assert.equal(failed.listings[0].officialGeography?.status,'known');assert.equal(failed.listings[0].officialGeography?.retrievedAt,past);assert.equal(failed.listings[0].officialGeography?.lastAttemptStatus,'error');assert.equal(failed.listings[1].officialGeography,null);
+  const retry=await enrichOfficialGeography([failed.listings[0]],[],{...offline,at:'2026-11-12T18:00:00Z',read:async()=>{throw Error('must back off');}});assert.equal(retry.stats.queries,0);assert.equal(retry.stats.cacheHits,1);
   const malformed=await enrichOfficialGeography([listing()],[stored],{...offline,read:async()=>({})});assert.equal(malformed.listings[0].officialGeography?.status,'known');assert.equal(malformed.listings[0].officialGeography?.lastAttemptStatus,'error');
 });
 test('Negative cache has seven-day TTL; errors one day; changed-point failures never inherit old names', async () => {
