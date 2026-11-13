@@ -45,6 +45,12 @@ Durable user rule: no decorative or useless accordions/disclosures. Useful sourc
 
 ## Approved Review Experience
 
+- A light/dark option follows the device initially (including live device changes
+  until explicitly chosen). The shared header toggle remembers explicit light/dark
+  only in this browser/device, not the account. Auth, logout and demo switches do
+  not alter this preference. The overview map uses managed CARTO Positron in light
+  and the existing Dark Matter in dark, on the same provider/key and map instance.
+
 - Open on new matches.
 - Mobile uses a Tinder-like property profile: swipe right to favourite, left to dismiss. Dismissed listings remain saved in a separate collection and can be restored.
 - Story-style property photos automatically advance within the current property. Below them show a property title, rent, surface, move-in date, utilities inclusion, bedroom count and relevant available facts, followed by the full description.

@@ -1,0 +1,82 @@
+/* Approved daylight counterpart; geometry/type and fixed photo overlays stay intact. */
+.theme-button,.mobile-root .theme-button { width:44px; min-width:44px; height:44px; min-height:44px; padding:10px; flex-shrink:0; }
+.theme-button svg { display:block; }
+/* Existing dark readability defects found in the cross-theme field audit. */
+html[data-theme=dark] :is(input:not([type=checkbox]),select),html[data-theme=dark] body:has(.signin) input,
+html[data-theme=dark] .mobile-root :is(input,select) { border-color:#827b6e; }
+html[data-theme=dark] .skip-link { background:#141412; color:#f4f3ef; }
+html[data-theme=dark] body:has(.signin) .error { background:#2b1f1c; color:#ffb4ab; border-color:#827b6e; }
+html[data-theme=dark] body:has(.signin) button.primary:hover:not(:disabled) { background:#ddd9cf; color:#141412; }
+html[data-theme=dark] body:has(.signin) button.primary:active:not(:disabled) { background:#c8c1b2; color:#141412; }
+html:root[data-theme=light],html[data-theme=light] .mobile-root,html[data-theme=light] body:has(.signin) {
+  --surface:#f5f3ed; --ink:#24231f; --muted:#625e56; --accent:#24231f;
+  --line:#d8d3c8; --focus:#756026; --brass:#756026; --control:#827b6e;
+  background:var(--surface); color:var(--ink); color-scheme:light;
+}
+html:root[data-theme=light]:has(.desktop-view-favourite),html[data-theme=light] .mobile-root.m-favourite { --surface:#f8f6f0; }
+html:root[data-theme=light]:has(.desktop-view-dismissed),html[data-theme=light] .mobile-root:is(.m-dismissed,.m-dossier) { --surface:#f1eee6; }
+html[data-theme=light] body,html[data-theme=light] #root { background:var(--surface); color:var(--ink); }
+html[data-theme=light] * { scrollbar-color:var(--control) var(--surface); }
+html[data-theme=light] ::selection { background:#ddd6c8; color:#24231f; }
+html[data-theme=light] :is(.app-header,.navigation,.signin) { background:var(--surface); color:var(--ink); }
+html[data-theme=light] :is(button,input:not([type=checkbox]),select),html[data-theme=light] .mobile-root :is(button,input,select) { border-color:var(--control); caret-color:var(--ink); }
+html[data-theme=light] :is(input,select),html[data-theme=light] body:has(.signin) input { color:var(--ink); background:transparent; }
+html[data-theme=light] select option { background:var(--surface); color:var(--ink); }
+html[data-theme=light] input::placeholder { color:var(--muted); opacity:1; }
+html[data-theme=light] input:autofill { box-shadow:0 0 0 1000px var(--surface) inset; -webkit-text-fill-color:var(--ink); caret-color:var(--ink); }
+html[data-theme=light] :is(button,.mobile-root button,body:has(.signin) button):disabled { opacity:1; color:var(--muted); background:#e8e3d9; border-color:var(--control); }
+html[data-theme=light] :is(button,.mobile-root button):hover:not(:disabled) { background:#e8e3d8; }
+html[data-theme=light] :is(button,.mobile-root button):active:not(:disabled) { background:#ddd6c8; }
+html[data-theme=light] :is(button.primary,.mobile-root .m-primary,body:has(.signin) button.primary) { background:#24231f; color:#f8f6f0; border-color:#24231f; }
+html[data-theme=light] :is(button.primary,.mobile-root .m-primary):hover:not(:disabled) { background:#444037; }
+html[data-theme=light] :is(button.primary,.mobile-root .m-primary):active:not(:disabled) { background:#625e56; }
+html[data-theme=light] :is(.demo-tag,.private-tag,body:has(.signin) .demo-tag,body:has(.signin) .private-tag) { background:#e8e3d9; color:var(--muted); }
+html[data-theme=light] :is(.list-item.selected,.desktop-view-dismissed .list-item.selected,.mobile-root .m-types button[aria-pressed=true]) { background:#e8e3d8; border-color:var(--control); }
+html[data-theme=light] :is(.desktop-view-dismissed .list-item,.m-dismissed .m-collection-card,.m-search,.mobile-root.m-dossier .m-detail-section>h2,.m-announcement:not(:empty)) { background:#e8e3d9; }
+html[data-theme=light] :is(.loading-state,.m-dismissed .m-card-context,.mobile-root .m-archive-filters button) { background:#e8e3d8; }
+html[data-theme=light] .mobile-root .m-archive-filters button[aria-pressed=true] { background:var(--ink); color:var(--surface); }
+html[data-theme=light] :is(.pass,.available) { color:#365b43; }
+html[data-theme=light] :is(.fail,.error,.mobile-root .m-error) { color:#963f35; }
+html[data-theme=light] .error { background:#f3e5df; border-color:#963f35; }
+html[data-theme=light] :is(.unknown,.uncertain,.desktop-view-dismissed .list-source) { color:#756026; }
+html[data-theme=light] .m-fact-rows dt { color:var(--muted); }
+/* Muted/brass text and control edges need the stronger ink while pressed. */
+html[data-theme=light] :is(button,.mobile-root button):active:not(:disabled),
+html[data-theme=light] .collection-map button:active:not(:disabled) { color:#24231f; border-color:#625e56; }
+html[data-theme=light] :is(button.primary,.mobile-root .m-primary,body:has(.signin) button.primary):active:not(:disabled) { color:#f8f6f0; }
+html[data-theme=light] :is(.list-photo-fallback,.photo-fallback,.mobile-root .m-gallery .photo-fallback,.m-card-photo,.m-source-figure) { background:#e8e3d9; }
+html[data-theme=light] .m-city { border-color:var(--control); }
+html[data-theme=light] .mobile-root .m-digest input { border-color:var(--control); }
+html[data-theme=light] .mobile-root .m-digest input:checked { background:var(--ink); border-color:var(--ink); }
+html[data-theme=light] .m-budget-sliders input::-webkit-slider-runnable-track { background:var(--control); }
+html[data-theme=light] .m-budget-sliders input::-moz-range-track { background:var(--control); }
+html[data-theme=light] .password-field .password-control>button { background:transparent; color:var(--muted); }
+html[data-theme=light] .password-field .password-control>button:hover { color:var(--ink); background:transparent; }
+/* Image controls retain their own constant dark backing and white foreground. */
+html[data-theme=light] .photo-controls button,html[data-theme=light] .mobile-root .m-gallery .photo-controls button { color:#fff; background:#141412cc; border-color:#fff; }
+html[data-theme=light] .photo-controls button:hover:not(:disabled) { background:#35332d; }
+html[data-theme=light] .drag-label { color:#f8f6f0; }
+html[data-theme=light] .collection-map {
+  --cm-canvas:var(--surface); --cm-ink:#24231f; --cm-muted:#625e56;
+  --cm-line:#d8d3c8; --cm-brass:#756026;
+}
+html[data-theme=light] .collection-map button { border-color:var(--control); }
+html[data-theme=light] .collection-map button:hover:not(:disabled) { background:#e8e3d8; }
+html[data-theme=light] .collection-map button:active:not(:disabled) { background:#ddd6c8; }
+html[data-theme=light] .collection-map .cm-list-home.cm-active { background:#e8e3d8; }
+html[data-theme=light] .cm-map-area { background:#e8e3d9; }
+html[data-theme=light] .cm-group { border-color:var(--control); }
+html[data-theme=light] .collection-map .maplibregl-ctrl-group,html[data-theme=light] .collection-map .maplibregl-ctrl-group button { background:var(--surface); }
+html[data-theme=light] .mobile-root .collection-map .cm-toggle button[aria-pressed=true] { background:var(--cm-ink); color:var(--cm-canvas); }
+html[data-theme=light] .mobile-root .collection-map .cm-toggle button[aria-pressed=true]:hover { background:#444037; }
+@media(max-width:760px) {
+  /* Keep every existing masthead control at 390px; no navigation label removed. */
+  .m-masthead { gap:8px; padding-inline:16px; }
+  .m-header-meta { flex-shrink:1; }
+  .m-masthead>.theme-button { margin-left:auto; }
+  .m-header-count,.m-saved-count { margin-left:auto; }
+  .m-header-count~.theme-button,.m-saved-count~.theme-button { margin-left:0; }
+  html[data-theme=light] body:has(.signin) :is(.app-header,.navigation,.signin) { background:var(--surface); color:var(--ink); }
+  html[data-theme=light] body:has(.signin) button { color:var(--ink); }
+  html[data-theme=light] body:has(.signin) button.primary { color:#f8f6f0; }
+}

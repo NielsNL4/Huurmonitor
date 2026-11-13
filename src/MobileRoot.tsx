@@ -21,7 +21,7 @@ interface Props {
   error: string; notice: string; undo: { key:string;decision:Decision } | null;
   changeDecision: (key:string,decision:Decision,remember?:boolean) => void;
   save: (profile:Profile) => void; runs: SourceRun[]; delivery: string;
-  accountActions: ReactNode; accountSettings: ReactNode; refresh: (() => void) | undefined; Gallery: GalleryComponent;
+  themeButton: ReactNode; accountActions: ReactNode; accountSettings: ReactNode; refresh: (() => void) | undefined; Gallery: GalleryComponent;
 }
 const verdictText = { pass:'Voldoet', fail:'Voldoet niet', unknown:'Onbekend' };
 const area = (listing: Listing) => listing.area === null ? 'Niet vermeld' : `${listing.area.toLocaleString('nl-NL')} m²`;
@@ -59,6 +59,7 @@ export function MobileRoot(props: Props) {
       {view==='new'&&!detail&&<><span className="m-header-meta">Groningen · {demo?'Demo':'Overzicht'}</span><span className="m-header-count">{active?activeIndex+1:0} van {filtered.length}</span></>}
       {view==='favourite'&&!detail&&<><span className="m-header-meta">Groningen</span><span className="m-saved-count">{favouriteHomes.length} bewaard</span></>}
       {(detail||view==='favourite'||view==='dismissed')&&<button className="m-account" aria-label="Naar profiel" onClick={()=>navigate('profile')}><MobileIcon name="account" size={16}/></button>}
+      {props.themeButton}
     </header>
     <main id="main" ref={reading} tabIndex={-1} className="m-reading" data-screen={screenKey}>
       {demo&&<p className="m-demo">Demo · publieke voorbeelden, geen live aanbod</p>}

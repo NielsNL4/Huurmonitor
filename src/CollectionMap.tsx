@@ -7,6 +7,7 @@ import { effectiveLocation } from '../shared/location';
 import { priceDisplay } from '../shared/price-display';
 import { listingPresentation } from '../shared/listing-presentation';
 import { cartoStyleUrl, mapCollection, mapFeatures, mapStatus, type MapSession } from './map-model';
+import { useTheme } from './useTheme';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './collection-map.css';
 
@@ -32,8 +33,9 @@ export function CollectionMap({homes,profile,demo,hidden=false,state,setState,op
   const collection=useMemo(()=>mapCollection(homes,profile),[homes,profile]);
   const data=useMemo(()=>mapFeatures(collection),[collection]);
   const selected=collection.find(home=>home.listing.key===state.selectedKey) ?? collection[0];
-  const styleUrl=cartoStyleUrl(import.meta.env.VITE_CARTO_BASEMAPS_KEY);
-  const requestedStyle=useRef({styleUrl}); requestedStyle.current={styleUrl};
+  const theme=useTheme();
+  const styleUrl=cartoStyleUrl(import.meta.env.VITE_CARTO_BASEMAPS_KEY,theme);
+  const requestedStyle=useRef({styleUrl,theme}); requestedStyle.current={styleUrl,theme};
   const appliedStyle=useRef<string | null>(null), generation=useRef(0);
   const configured=!!styleUrl;
   const [status,setStatus]=useState(styleUrl?'Kaart laden…':'Kaart niet ingesteld: een eigen gratis CARTO-basemapkey ontbreekt. Gebruik de lijst.');
@@ -127,7 +129,7 @@ export function CollectionMap({homes,profile,demo,hidden=false,state,setState,op
           if(!instance || disposed)return;
           // Managed CARTO style, with only safe layer-type/role palette changes.
           // Glyphs, sprites, sources, labels and provider attribution stay intact.
-          for(const layer of instance.getStyle().layers){
+          if(requestedStyle.current.theme==='dark')for(const layer of instance.getStyle().layers){
             if(layer.type==='background')instance.setPaintProperty(layer.id,'background-color','#141412');
             else if(layer.type==='fill' && /water/i.test(layer.id))instance.setPaintProperty(layer.id,'fill-color','#213331');
             else if(layer.type==='line' && /road|street|transportation/i.test(layer.id))instance.setPaintProperty(layer.id,'line-color','#49473f');
@@ -151,6 +153,15 @@ export function CollectionMap({homes,profile,demo,hidden=false,state,setState,op
     }).catch(()=>{if(!disposed){setFailed(true);setStatus('Kaartmodule niet geladen. Gebruik de lijst of herlaad de pagina.');}});
     return ()=>{disposed=true;observer?.disconnect();clearMarkers.current();instance?.remove();map.current=null;refreshMarkers.current=()=>{};clearMarkers.current=()=>{};};
   },[configured]);
+  useEffect(()=>{
+    if(!map.current || !styleUrl || appliedStyle.current===styleUrl)return;
+    generation.current++;clearMarkers.current();appliedStyle.current=styleUrl;
+    setFailed(false);setStatus('Kaart laden…');
+    // Diffed styles do not emit style.load in MapLibre 6. Rebuild only the
+    // style (not the map) so palette/source restoration has one reliable owner.
+    try { map.current.setStyle(styleUrl,{diff:false}); }
+    catch { setFailed(true);setStatus('Kaartstijl niet geladen. Gebruik de lijst of kies opnieuw een modus.'); }
+  },[styleUrl]);
   useEffect(()=>{
     const source=map.current?.getSource('homes') as GeoJSONSource | undefined;
     generation.current++;

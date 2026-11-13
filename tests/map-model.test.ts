@@ -47,11 +47,13 @@ test('house-number consensus groups unit advertisements without merging keys, ti
   assert.equal(homes[1].decision,'favourite');assert.equal(homes[1].listing.title,'Synthetic fixture 12--8a');assert.equal(homes[0].listing.city,null);
   assert.equal(listingPresentation(homes[0].listing).locationCaveat,'Locatie op huisnummerniveau; toevoeging niet bepaald');
 });
-test('safe public key configuration uses the managed CARTO dark style, with no fallback or arbitrary URL',()=>{
+test('safe public key configuration has two managed CARTO themes, with no fallback or arbitrary URL',()=>{
   for(const value of [undefined,null,'',' ','short','https://elsewhere.invalid/','token&profile=private','token\nprivate'])assert.equal(cartoStyleUrl(value),null);
   const url=new URL(cartoStyleUrl('synthetic-test-key')!);assert.equal(url.origin,'https://basemaps.cartocdn.com');assert.equal(url.pathname,'/gl/dark-matter-gl-style/style.json');assert.deepEqual([...url.searchParams.keys()],['key']);assert.equal(url.searchParams.get('key'),'synthetic-test-key');
   assert.ok(cartoStyleUrl('synthetic.jwt.token'));
-
+  const light=new URL(cartoStyleUrl('synthetic-test-key','light')!);
+  assert.equal(light.origin,url.origin);assert.equal(light.pathname,'/gl/positron-gl-style/style.json');assert.equal(light.search,url.search);
+  assert.equal(cartoStyleUrl(undefined,'light'),null);
 });
 test('temporary map dossier preserves camera, selected key, list mode and scroll; reset creates clean owner state',()=>{
   const initial={...newMapSession(),selectedKey:'one',camera:{center:[6.57,53.22] as [number,number],zoom:15,bearing:12,pitch:0},mode:'list' as const,listScroll:412.5};

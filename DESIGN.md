@@ -165,6 +165,68 @@ and project-wide no-geocoder rules; source neighbourhood/matching facts and the
 per-property source-only iframe are not changed. No browser geocoder/geolocation.
 The surface contract and scoped evidence live in `.impeccable/map-surface-brief.md`.
 
+## Approved light/dark choice · November 2026
+
+Device preference is the initial theme and remains live until an explicit choice.
+One shared 44px header button offers “Lichte modus inschakelen” / “Donkere modus
+inschakelen”, including signed-out screens. Explicit light/dark is remembered only
+in this browser/device (`huurmonitor-theme-v1`), independent of account/demo/logout.
+Storage denial keeps the choice in memory. No account synchronization/settings page.
+A synchronous same-origin, base-relative bootstrap owns root theme/native scheme
+and the single browser theme-color before React starts; no external bootstrap/CSP change.
+
+The light counterpart preserves every editorial layout/type/collection distinction:
+canvas `#f5f3ed`, favourites `#f8f6f0`, archive/dossier `#f1eee6`, cards `#e8e3d9`,
+ink `#24231f`, muted/placeholders `#625e56`, dividers `#d8d3c8`, control borders and
+tracks `#827b6e`, hover/selection `#e8e3d8`, pressed `#ddd6c8`, brass/focus/unknown
+`#756026`, pass `#365b43`, fail `#963f35`, error background `#f3e5df`.
+Primary buttons use dark ink with `#f8f6f0` text. Photo overlays stay white on a
+fixed dark backing; no global filter/inversion. Archive photographs stay grayscale.
+Mobile local tokens, sign-in native controls, autofill, placeholders and safe-area
+canvas participate, not just desktop root tokens.
+
+The same managed CARTO provider/key uses Positron in light and Dark Matter in dark.
+Only Dark Matter gets the existing dark paint adjustments. Theme switches use
+`setStyle` on the same MapLibre instance, restoring the latest local homes source
+on `style.load`, retaining camera/selection/group/list state without refitting.
+Stale cluster responses are generation-guarded. Fallback list/privacy/attribution
+remain unchanged; no browser geocoding or new provider/dependency.
+
+Theme implementation evidence: 13/13 focused theme/map-model tests; one
+`npm run check` passed (106 modules). Vite reports the expected unbundled classic
+bootstrap warning (the file is copied and base-relative in dist) and incumbent
+large chunks. Isolated Chromium at 1440×1000 and 390×844, both themes, synthetic
+demo only: New, favourites, archive, mobile dossier, native profile, masked/revealed
+passwords and confirmation/status; all five mobile labels and 44px theme control,
+no horizontal overflow. Computed ancestor-background audit sampled 337 pairs:
+worst passing sampled text was brass `#756026` on card `#e8e3d9`, 4.75:1; light
+field edge `#827b6e` on canvas `#f5f3ed`, 3.78:1. Dark field edges (2.39:1), mobile
+skip-link (1.11–1.29:1), sign-in error (2.15:1) and primary hover (1.95:1) were
+corrected in one batch; named confirmation reported no sampled contrast failures.
+Older skip-link captures are explicitly marked superseded, not rerendered.
+Pressed light controls use ink/stronger edges because muted/brass/control palette
+pairs on the pressed background alone fell below their thresholds.
+
+Real CARTO Positron tiles/labels and cluster markers were observed. Same map
+instance, camera and selected preview survived rapid toggles; mobile list scroll
+remained 240px. Mock provider failure retained the list; mobile recovery observed,
+desktop recovery sampled too early and is not established. Final inspection found
+MapLibre 6's diff path does not emit `style.load`; the last narrow correction uses
+`setStyle(url,{diff:false})`, rebuilding only the style so dark paint and homes
+restoration run reliably. This final option change is source-inspected, after the
+single check/browser budget: **not rebuilt or recaptured**. The earlier dark-map
+capture shows the previous/transitional light style and is not proof of final
+dark cartography. Group captures preceded async expansion, so group behavior
+reuses earlier map evidence rather than claiming a fresh verification.
+
+43 distinct ignored captures: `.impeccable/review/theme-*.png`; sanitized aggregate
+`theme-evidence.json` records the two initial harness interruptions (button locator,
+optimized CJS default export), bounded continuation, named confirmation and limits.
+One detector run: 31 historical palette/type sidecar advisories, zero primary
+findings; not a redesign gate. Final scoped tracked diff whitespace check passed.
+No real account reads/writes, geocoder calls, Safari/real device/autofill proof or
+real password success update. No secret/keyed URL recorded; no cloud/release work.
+
 # Design System: Huurmonitor
 
 ## Overview

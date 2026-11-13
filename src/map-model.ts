@@ -35,8 +35,8 @@ export function samePointGroups(homes: Home[]) {
   }
   return [...groups.values()];
 }
-export function cartoStyleUrl(key: unknown): string | null {
+export function cartoStyleUrl(key: unknown, theme: 'light' | 'dark' = 'dark'): string | null {
   // Public browser key, never a URL or arbitrary provider endpoint.
   if (typeof key !== 'string' || !/^[A-Za-z0-9_.-]{8,2048}$/.test(key)) return null;
-  return `https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json?key=${encodeURIComponent(key)}`;
+  return `https://basemaps.cartocdn.com/gl/${theme === 'light' ? 'positron-gl-style' : 'dark-matter-gl-style'}/style.json?key=${encodeURIComponent(key)}`;
 }

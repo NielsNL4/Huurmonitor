@@ -3,6 +3,17 @@
 Mode: Operate. Approved extension, code-first; the lead's accepted brief pins the
 direction. No reference reproduction, concept round or generated assets.
 
+Approved theme addition: managed CARTO Positron in light, Dark Matter in dark,
+same existing key/provider. No dark paint overrides on Positron. Keep the map
+instance and camera/selection/group/list mode/scroll through setStyle; style.load
+idempotently restores latest local homes, fits only once, guards stale async
+cluster results. Light pins/preview/group/legend/privacy/attribution/zoom controls
+use DESIGN's light roles. Existing missing-key/quota/WebGL list fallback remains.
+Theme evidence and limits are in DESIGN and ignored `review/theme-evidence.json`.
+Final MapLibre `diff:false` correction is source-inspected only; earlier dark
+cartography capture is transitional and not final appearance evidence. This is
+an explicit evidence limitation, not a claim that both live maps were recaptured.
+
 ## Direction contract
 THESIS: Read matches and saved homes spatially without turning position into a
 matching fact. No dashboard metrics, inferred doorways or hidden missing homes.

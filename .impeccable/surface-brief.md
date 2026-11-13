@@ -1,4 +1,18 @@
 # Property review · src/App.tsx
+## Approved theme counterpart
+The lead-approved palette and contract are recorded in DESIGN's “Approved
+light/dark choice”. Preserve current dark world, Newsreader/Hanken, square flat
+editorial layout, all five mobile labels, list/detail and collection distinctions.
+Light is a role-based counterpart, never inversion. Fixed photo overlays stay
+white on dark; mobile local/sign-in/native field tokens must also switch.
+Device-default/live until explicit local-only browser choice; shared accessible
+44px Dutch action button in desktop/mobile/signed-out headers. No account sync.
+One synchronous same-origin base-relative bootstrap before first paint owns root
+theme/color-scheme/theme-color. No new settings destination/auth side effects.
+Verification: focused theme/map tests, one final check, one isolated 1440/390
+both-theme demo batch plus at most one named correction confirmation; contrast
+via computed pairs and palette audit, not screenshots alone. No private reads.
+
 ## Approved Kaart extension (supersedes earlier overview/geocoder restrictions)
 The lead-accepted map brief is recorded in `map-surface-brief.md`. Add only the
 separate Kaart destination, linked matches/favourites map/list and temporary
