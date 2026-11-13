@@ -5,7 +5,7 @@ import { reconcile } from '../shared/state';
 import { currentAddress, houseNumberAddress } from '../shared/address';
 import { parseGeocoding } from '../worker/geocoding';
 import { listingPresentation } from '../shared/listing-presentation';
-import { cartoStyleUrl, closeMapDetail, mapCollection, mapFeatures, mapStatus, newMapSession, openMapDetail, samePointGroups } from '../src/map-model';
+import { cartoStyleUrl, closeMapDetail, mapCollection, mapFeatures, propertyMapFeatures, mapStatus, newMapSession, openMapDetail, samePointGroups } from '../src/map-model';
 
 const listing: Listing = {key:'gruno:map-fixture',externalId:'map-fixture',source:'gruno',url:'https://example.invalid',title:'Synthetic fixture 1',city:'Groningen',type:'kamer',area:20,bedrooms:1,available:true,moveIn:null,description:'Synthetic unit fixture',photos:[],incomeMin:null,observedAt:'2026-11-13T00:00:00Z',rent:{base:70000,headline:80000,serviceAggregate:10000,service:null,energy:null,knownMonthly:80000,comparison:'base+aggregate',utilities:'Onbekend',complete:false,note:''}};
 const home = (key:string,decision:Home['decision']='new',patch:Partial<Listing>={}):Home => ({...reconcile([],[{...listing,...patch,key}],neutralProfile).homes[0],decision});
@@ -54,6 +54,22 @@ test('safe public key configuration has two managed CARTO themes, with no fallba
   const light=new URL(cartoStyleUrl('synthetic-test-key','light')!);
   assert.equal(light.origin,url.origin);assert.equal(light.pathname,'/gl/positron-gl-style/style.json');assert.equal(light.search,url.search);
   assert.equal(cartoStyleUrl(undefined,'light'),null);
+});
+test('detail GeoJSON contains exactly its source, BAG or representative point, with only the current key',()=>{
+  const exact={...listing,title:'Synthetic fixture 12',city:'Groningen'};
+  const response={numFound:1,start:0,numFoundExact:true,docs:[{bron:'BAG',type:'adres',straatnaam:'Synthetic fixture',woonplaatsnaam:'Groningen',huisnummer:12,postcode:'9712AB',nummeraanduiding_id:'0014200000000001',adresseerbaarobject_id:'0014010000000001',centroide_ll:'POINT(6.58 53.23)'}]};
+  const bag={...exact,geocoding:parseGeocoding({response},currentAddress(exact)!,'2026-11-13T12:00:00Z')};
+  const representative={...exact,title:'Synthetic fixture 12 (kamer 1)'};
+  const addressEvidence=houseNumberAddress(representative);
+  const approx={...representative,addressEvidence,geocoding:parseGeocoding({response},currentAddress({...representative,addressEvidence})!,'2026-11-13T12:00:00Z')};
+  for(const [value,coords] of [[{...bag,location:point},[6.57,53.22]],[bag,[6.58,53.23]],[approx,[6.58,53.23]]] as const){
+    const data=propertyMapFeatures(value);
+    assert.equal(data.features.length,1);assert.deepEqual(data.features[0].geometry.coordinates,coords);
+    assert.deepEqual(data.features[0].properties,{key:listing.key});
+    assert.doesNotMatch(JSON.stringify(data),/Synthetic|address|profile|income|favourite|description/);
+  }
+  assert.equal(listingPresentation(approx).point?.precision,'house-number');
+  for(const value of [listing,{...bag,title:'Different input 99'},{...listing,location:{...point,lon:Infinity}},{...bag,geocoding:{...bag.geocoding,point:{lat:91,lon:6.58}}}])assert.equal(propertyMapFeatures(value).features.length,0);
 });
 test('temporary map dossier preserves camera, selected key, list mode and scroll; reset creates clean owner state',()=>{
   const initial={...newMapSession(),selectedKey:'one',camera:{center:[6.57,53.22] as [number,number],zoom:15,bearing:12,pitch:0},mode:'list' as const,listScroll:412.5};

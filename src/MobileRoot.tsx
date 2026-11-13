@@ -66,7 +66,7 @@ export function MobileRoot(props: Props) {
       {error&&<div className="m-feedback m-error" role="alert">{error}</div>}
       <div className="m-announcement" role="status" aria-live="polite">{notice&&<p>{notice}</p>}{undo&&<button disabled={busy} onClick={()=>props.changeDecision(undo.key,undo.decision,false)}><MobileIcon name="undo" size={15}/>Ongedaan maken</button>}</div>
       {!demo&&runs.some(r=>r.status==='failed')&&<p className="m-feedback">Een of meer bronnen konden niet worden gelezen. Eerdere woningen blijven bewaard; controleer de bronstatus.</p>}
-      {view==='map'&&<CollectionMap homes={homes} profile={profile} demo={demo} state={props.mapState} setState={props.setMapState} hidden={!!detail} open={key=>props.setMapState(previous=>openMapDetail(previous,key))}/>}
+      {view==='map'&&!detail&&<CollectionMap homes={homes} profile={profile} demo={demo} state={props.mapState} setState={props.setMapState} open={key=>props.setMapState(previous=>openMapDetail(previous,key))}/>}
       {detail?<>
         <div className="m-overview-row"><button onClick={back}><MobileIcon name="back" size={12}/>{view==='map'?'Terug naar kaart':'Terug naar overzicht'}</button><button disabled={busy} aria-label={detail.decision==='favourite'?'Uit favorieten':'Bewaren'} aria-pressed={detail.decision==='favourite'} onClick={()=>props.changeDecision(detail.listing.key,detail.decision==='favourite'?'new':'favourite')}><MobileIcon name="favourite"/></button></div>
         <MobileProperty home={detail} demo={demo} busy={busy} dossier Gallery={Gallery} onDecision={d=>props.changeDecision(detail.listing.key,d)}/>

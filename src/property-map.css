@@ -1,0 +1,11 @@
+.property-map-frame{position:relative;height:300px;margin:12px 0;border:1px solid var(--line);background:var(--surface);overflow:hidden;color:var(--ink)}
+.property-map-canvas{position:absolute;inset:0}
+.property-map .property-map-status{position:absolute;top:12px;left:12px;right:64px;margin:0;padding:12px;background:var(--surface);color:var(--ink);line-height:1.5;pointer-events:none}
+.property-map-attribution{position:absolute;bottom:0;right:0;padding:5px 8px;background:var(--surface);color:var(--ink);font:11px/1.5 MobileHanken,sans-serif}
+.property-map-attribution a{color:inherit}
+.property-map-pin{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--ink);background:var(--surface)}
+.property-map-pin span{width:12px;height:12px;border-radius:50%;background:var(--ink)}
+.property-map .maplibregl-ctrl-group{border-radius:0;background:#f4f3ef;box-shadow:none}
+.property-map .maplibregl-ctrl-group button{width:44px;height:44px;min-height:44px;border-radius:0;background:#f4f3ef;color:#24231f}
+.property-map .maplibregl-ctrl-group button:hover:not(:disabled){background:#ddd9cf}
+.property-map :focus-visible{outline:3px solid var(--focus);outline-offset:-3px}

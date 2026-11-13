@@ -43,11 +43,11 @@ test('OSM bbox is lon/lat, marker is lat/lon; old observations and invalid point
   const edge=new URL(mapLinks({...point,lat:90,lon:180})!.embed).searchParams.get('bbox')!.split(',').map(Number);
   assert.ok(edge[2]<=180&&edge[3]<=90);
 });
-test('Map initial markup automatically embeds valid source points; legacy observations show honest missing location', () => {
+test('Map initial markup lazily loads only known locations with honest precision and CARTO privacy disclosure', () => {
   const listing=parseListing('gruno',fixture('gruno'),'https://example.invalid/property','fixture');
   delete listing.location;
   const old=renderToStaticMarkup(createElement(PropertyMap,{listing}));
   assert.match(old,/Locatie op kaart niet beschikbaar/);assert.doesNotMatch(old,/<iframe|Kaart laden|openstreetmap/);
   const initial=renderToStaticMarkup(createElement(PropertyMap,{listing:{...listing,location:point}}));
-  assert.match(initial,/<iframe/);assert.match(initial,/src="https:\/\/www\.openstreetmap\.org\/export\/embed\.html\?/);assert.match(initial,/referrerPolicy="no-referrer"/i);assert.match(initial,/title="Locatie volgens de bron:/);assert.doesNotMatch(initial,/Kaart laden|<button/);assert.match(initial,/laadt automatisch/);assert.match(initial,/IP-adres/);assert.match(initial,/niet je zoekprofiel/);assert.match(initial,/Locatie volgens de bron/);
+  assert.doesNotMatch(initial,/<iframe|export\/embed|<button/);assert.match(initial,/laadt automatisch/);assert.match(initial,/CARTO ontvangt je IP-adres/);assert.match(initial,/niet je zoekprofiel of adresgegevens/);assert.match(initial,/Locatie volgens de bron/);assert.match(initial,/precisie onbekend/);assert.doesNotMatch(initial,/Locatie op kaart niet beschikbaar/);
 });

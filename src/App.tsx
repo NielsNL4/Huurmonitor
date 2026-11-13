@@ -255,7 +255,7 @@ export default function App() {
           {emailAuth.error && <p className="error" role="alert">{emailAuth.error}</p>}
         </form>
         <button onClick={enterDemo}>Eerst de demo bekijken</button></section> : view === 'profile' ? <><ProfileForm value={profile} busy={busy} demo={demo} save={p => void saveProfile(p)}/>{accountSettings}</> : view === 'map' ? <>
-          <CollectionMap homes={displayed} profile={profile} demo={demo} state={mapState} setState={setMapState} hidden={!!mapDetail} open={key=>{setMapState(previous=>openMapDetail(previous,key));reading.current?.scrollTo({top:0,behavior:'instant'});}}/>
+          {!mapDetail&&<CollectionMap homes={displayed} profile={profile} demo={demo} state={mapState} setState={setMapState} open={key=>{setMapState(previous=>openMapDetail(previous,key));reading.current?.scrollTo({top:0,behavior:'instant'});}}/>}
           {mapDetail&&<div className="cm-detail"><button className="cm-back" onClick={()=>setMapState(previous=>closeMapDetail(previous))}>Terug naar kaart</button><Property key={mapDetail.listing.key} home={mapDetail} profile={profile} demo={demo} busy={busy} onDecision={decision=>void changeDecision(mapDetail.listing.key,decision)}/></div>}
         </> : <>
         <div className="view-heading"><div><h1>{labels[view] === 'Nieuw' ? 'Nieuwe matches' : labels[view]}</h1><p>{view === 'new' ? 'Bekijk één woning tegelijk. Bewaar wat bij je past.' : view === 'favourite' ? 'Jouw bewaarde woningen. Ook als feiten of beschikbaarheid veranderen.' : 'Niet voor nu. Je kunt elke woning herstellen.'}</p></div>{!demo && session && <button disabled={loading} onClick={() => void load(session.user.id)}><Icon name="refresh"/>{loading ? 'Laden…' : 'Vernieuwen'}</button>}</div>

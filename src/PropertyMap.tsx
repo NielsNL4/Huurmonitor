@@ -1,20 +1,17 @@
+import { lazy, Suspense } from 'react';
 import type { Listing } from '../shared/model';
-import { mapLinks } from '../shared/location';
+import { listingPresentation } from '../shared/listing-presentation';
 
+// Keep browser theme globals and MapLibre out of Node/SSR imports.
+const PropertyMapLibre=lazy(()=>import('./PropertyMapLibre'));
 export function PropertyMap({ listing }: { listing: Listing }) {
-  const links = mapLinks(listing.location);
-  // Replace the embedded map when the selected property or source point changes.
-  return <MapContent key={`${listing.key}:${links?.embed ?? 'unknown'}`} listing={listing} links={links}/>;
-}
-
-function MapContent({ listing, links }: { listing: Listing; links: ReturnType<typeof mapLinks> }) {
+  const {point}=listingPresentation(listing);
   return <section className="property-map" aria-label="Locatie op kaart">
     <h3>Locatie op kaart</h3>
-    {links ? <>
-      <p>Locatie volgens de bron. Het punt is niet gegarandeerd de exacte ingang.</p>
-      <p>Deze kaart laadt automatisch. OpenStreetMap ontvangt je IP-adres en de bekeken locatie, niet je zoekprofiel. Dit geldt ook voor de grotere kaart.</p>
-      <iframe src={links.embed} title={`Locatie volgens de bron: ${listing.title}`} referrerPolicy="no-referrer"/>
-      <a href={links.larger} target="_blank" rel="noreferrer">Grotere kaart bij OpenStreetMap</a>
+    {point ? <>
+      <p>{point.provenance==='source' ? 'Locatie volgens de bron · precisie onbekend. Het punt is niet gegarandeerd de exacte ingang.' : point.precision==='house-number' ? 'Benaderde locatie op huisnummerniveau; geen exacte woninglocatie.' : 'PDOK/BAG-adreslocatie; geen gegarandeerde ingang.'}</p>
+      <p>Deze kaart laadt automatisch. CARTO ontvangt je IP-adres en het bekeken kaartgebied, niet je zoekprofiel of adresgegevens. Het woningpunt blijft lokaal in de kaart.</p>
+      <Suspense fallback={<p role="status">Kaart laden…</p>}><PropertyMapLibre key={`${listing.key}:${point.lon}:${point.lat}`} listing={listing}/></Suspense>
     </> : <p>Locatie op kaart niet beschikbaar. Bekijk de originele advertentie via de bronlink hieronder.</p>}
   </section>;
 }

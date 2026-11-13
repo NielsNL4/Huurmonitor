@@ -1,4 +1,4 @@
-import type { Home, Profile } from '../shared/model';
+import type { Home, Listing, Profile } from '../shared/model';
 import { evaluate } from '../shared/matcher';
 import { effectiveLocation } from '../shared/location';
 import type { FeatureCollection, Point } from 'geojson';
@@ -26,6 +26,11 @@ export function mapFeatures(homes: Home[]): FeatureCollection<Point> {
     const point=effectiveLocation(home.listing);
     return point ? [{type:'Feature' as const,geometry:{type:'Point' as const,coordinates:[point.lon,point.lat]},properties:{key:home.listing.key,favourite:home.decision==='favourite'}}] : [];
   })};
+}
+/** The detail canvas can only receive its current listing's validated point. */
+export function propertyMapFeatures(listing: Listing): FeatureCollection<Point> {
+  const point=effectiveLocation(listing);
+  return {type:'FeatureCollection',features:point ? [{type:'Feature',geometry:{type:'Point',coordinates:[point.lon,point.lat]},properties:{key:listing.key}}] : []};
 }
 export function samePointGroups(homes: Home[]) {
   const groups=new Map<string,string[]>();

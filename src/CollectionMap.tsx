@@ -1,14 +1,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
-import type { GeoJSONSource, Map as LibreMap, Marker } from 'maplibre-gl';
-import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
+import type { GeoJSONSource, Marker } from 'maplibre-gl';
 import type { Home, Profile } from '../shared/model';
 import { money } from '../shared/model';
 import { effectiveLocation } from '../shared/location';
 import { priceDisplay } from '../shared/price-display';
 import { listingPresentation } from '../shared/listing-presentation';
-import { cartoStyleUrl, mapCollection, mapFeatures, mapStatus, type MapSession } from './map-model';
-import { useTheme } from './useTheme';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import { mapCollection, mapFeatures, mapStatus, type MapSession } from './map-model';
+import { useMapLibreCanvas } from './useMapLibreCanvas';
 import './collection-map.css';
 
 interface Props {
@@ -33,44 +31,37 @@ export function CollectionMap({homes,profile,demo,hidden=false,state,setState,op
   const collection=useMemo(()=>mapCollection(homes,profile),[homes,profile]);
   const data=useMemo(()=>mapFeatures(collection),[collection]);
   const selected=collection.find(home=>home.listing.key===state.selectedKey) ?? collection[0];
-  const theme=useTheme();
-  const styleUrl=cartoStyleUrl(import.meta.env.VITE_CARTO_BASEMAPS_KEY,theme);
-  const requestedStyle=useRef({styleUrl,theme}); requestedStyle.current={styleUrl,theme};
-  const appliedStyle=useRef<string | null>(null), generation=useRef(0);
-  const configured=!!styleUrl;
-  const [status,setStatus]=useState(styleUrl?'Kaart laden…':'Kaart niet ingesteld: een eigen gratis CARTO-basemapkey ontbreekt. Gebruik de lijst.');
-  const [failed,setFailed]=useState(false), [group,setGroup]=useState<string[]>([]);
-  const container=useRef<HTMLDivElement>(null), list=useRef<HTMLDivElement>(null), map=useRef<LibreMap | null>(null);
+  const generation=useRef(0);
+  const [group,setGroup]=useState<string[]>([]);
+  const list=useRef<HTMLDivElement>(null);
   const latest=useRef({collection,data,selected,state,setState,demo});
   latest.current={collection,data,selected,state,setState,demo};
   const refreshMarkers=useRef<()=>void>(()=>{});
   const clearMarkers=useRef<()=>void>(()=>{});
-  const missing=collection.length-data.features.length;
-  function select(key:string) {
-    setState(previous=>({...previous,selectedKey:key}));
-    const point=effectiveLocation(collection.find(home=>home.listing.key===key)!.listing);
-    if (point && map.current) map.current.easeTo({center:[point.lon,point.lat],duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:350});
-  }
-  useLayoutEffect(()=>{if(list.current)list.current.scrollTop=state.listScroll;},[hidden,state.mode]);
-  useEffect(()=>{
-    if (!configured || !container.current) return;
-    let disposed=false, fitted=false, instance:LibreMap | null=null, observer:ResizeObserver | null=null;
+  const fitted=useRef(false);
+  const {container,map,status,failed,setStatus}=useMapLibreCanvas({
+    label:'Woningkaart. Gebruik de lijst voor alle woningen en toetsenbordselectie.',
+    fallback:'De lijst blijft bruikbaar.',
+    initial:()=>{
+      const camera=latest.current.state.camera;
+      return {center:camera?.center ?? [6.57,53.22],zoom:camera?.zoom ?? 12,bearing:camera?.bearing ?? 0,pitch:camera?.pitch ?? 0};
+    },
+    styleChanging:()=>{generation.current++;clearMarkers.current();},
+    styleLoaded:(instance,lib)=>{
+      if(!instance.getSource('homes'))instance.addSource('homes',{type:'geojson',data:latest.current.data,maxzoom:22,cluster:true,clusterRadius:55,clusterMaxZoom:20});
+      if(!instance.getLayer('home-anchors'))instance.addLayer({id:'home-anchors',type:'circle',source:'homes',paint:{'circle-radius':1,'circle-opacity':0}});
+      if(!fitted.current && !latest.current.state.camera && latest.current.data.features.length){
+        const bounds=new lib.LngLatBounds();for(const feature of latest.current.data.features)bounds.extend(feature.geometry.coordinates as [number,number]);
+        instance.fitBounds(bounds,{padding:65,maxZoom:14,duration:0});
+      }
+      fitted.current=true;refreshMarkers.current();
+    },
+    created:(instance,lib)=>{
+    let disposed=false;
     const markers=new Map<string,Marker>();
     clearMarkers.current=()=>{for(const marker of markers.values())marker.remove();markers.clear();};
-    void import('maplibre-gl').then(lib=>{
-      if(disposed || !container.current)return;
-      try {
-        // MapLibre 6's sibling-worker URL is not preserved by Vite chunking.
-        // Let Vite emit a base-aware same-origin module-worker asset instead.
-        lib.setWorkerUrl(workerUrl);
-        const camera=latest.current.state.camera;
-        appliedStyle.current=requestedStyle.current.styleUrl;
-        instance=new lib.Map({container:container.current,style:appliedStyle.current!,center:camera?.center ?? [6.57,53.22],zoom:camera?.zoom ?? 12,bearing:camera?.bearing ?? 0,pitch:camera?.pitch ?? 0,attributionControl:false,renderWorldCopies:false,maxZoom:20});
-        map.current=instance;
-        instance.addControl(new lib.NavigationControl({showCompass:false}),'top-right');
-        instance.getCanvas().setAttribute('aria-label','Woningkaart. Gebruik de lijst voor alle woningen en toetsenbordselectie.');
-        const update=()=>{
-          if(!instance || !instance.isStyleLoaded() || !instance.getSource('homes'))return;
+    const update=()=>{
+          if(!instance.isStyleLoaded() || !instance.getSource('homes'))return;
           const revision=generation.current;
           const current=latest.current, visible=new Set<string>();
           for(const feature of instance.querySourceFeatures('homes')){
@@ -95,9 +86,9 @@ export function CollectionMap({homes,profile,demo,hidden=false,state,setState,op
                   button.dataset.members=JSON.stringify(leaves.map(leaf=>String(leaf.properties?.key)));
                   const active=leaves.some(leaf=>leaf.properties?.key===latest.current.selected?.listing.key);
                   button.classList.toggle('cm-selected',active);button.setAttribute('aria-pressed',String(active));
-                }).catch(()=>{}); // The complete React list remains the fallback.
+                }).catch(()=>{});
                 button.addEventListener('click',()=>{
-                  const source=instance?.getSource('homes') as GeoJSONSource | undefined;
+                  const source=instance.getSource('homes') as GeoJSONSource | undefined;
                   if(!source)return;
                   void source.getClusterLeaves(Number(properties.cluster_id),Number(properties.point_count),0).then(leaves=>{
                     if(disposed || revision!==generation.current)return;
@@ -123,45 +114,22 @@ export function CollectionMap({homes,profile,demo,hidden=false,state,setState,op
             marker.getElement().setAttribute('aria-pressed',String(active));
           }
           for(const [id,marker] of markers)if(!visible.has(id)){marker.remove();markers.delete(id);}
-        };
-        refreshMarkers.current=update;
-        instance.on('style.load',()=>{
-          if(!instance || disposed)return;
-          // Managed CARTO style, with only safe layer-type/role palette changes.
-          // Glyphs, sprites, sources, labels and provider attribution stay intact.
-          if(requestedStyle.current.theme==='dark')for(const layer of instance.getStyle().layers){
-            if(layer.type==='background')instance.setPaintProperty(layer.id,'background-color','#141412');
-            else if(layer.type==='fill' && /water/i.test(layer.id))instance.setPaintProperty(layer.id,'fill-color','#213331');
-            else if(layer.type==='line' && /road|street|transportation/i.test(layer.id))instance.setPaintProperty(layer.id,'line-color','#49473f');
-            else if(layer.type==='symbol' && layer.layout?.['text-field']){instance.setPaintProperty(layer.id,'text-color','#c4c0b5');instance.setPaintProperty(layer.id,'text-halo-color','#141412');}
-          }
-          if(!instance.getSource('homes'))instance.addSource('homes',{type:'geojson',data:latest.current.data,maxzoom:22,cluster:true,clusterRadius:55,clusterMaxZoom:20});
-          if(!instance.getLayer('home-anchors'))instance.addLayer({id:'home-anchors',type:'circle',source:'homes',paint:{'circle-radius':1,'circle-opacity':0}});
-          if(!fitted && !camera && latest.current.data.features.length){
-            const bounds=new lib.LngLatBounds();for(const feature of latest.current.data.features)bounds.extend(feature.geometry.coordinates as [number,number]);
-            instance.fitBounds(bounds,{padding:65,maxZoom:14,duration:0});
-          }
-          fitted=true;setFailed(false);setStatus('');update();
-        });
-        instance.on('idle',update);instance.on('moveend',()=>{
-          if(!instance || disposed)return;const center=instance.getCenter();
-          latest.current.setState(previous=>({...previous,camera:{center:[center.lng,center.lat],zoom:instance!.getZoom(),bearing:instance!.getBearing(),pitch:instance!.getPitch()}}));update();
-        });
-        instance.on('error',()=>{if(!disposed){setFailed(true);setStatus('Kaart niet beschikbaar. Controleer CARTO-key, domeinbeperking of gratis quotum; ook WebGL of de verbinding kan ontbreken. De lijst blijft bruikbaar.');}});
-        observer=new ResizeObserver(()=>instance?.resize());observer.observe(container.current);
-      } catch {setFailed(true);setStatus('Kaart niet beschikbaar in deze browser (WebGL). Gebruik de lijst.');}
-    }).catch(()=>{if(!disposed){setFailed(true);setStatus('Kaartmodule niet geladen. Gebruik de lijst of herlaad de pagina.');}});
-    return ()=>{disposed=true;observer?.disconnect();clearMarkers.current();instance?.remove();map.current=null;refreshMarkers.current=()=>{};clearMarkers.current=()=>{};};
-  },[configured]);
-  useEffect(()=>{
-    if(!map.current || !styleUrl || appliedStyle.current===styleUrl)return;
-    generation.current++;clearMarkers.current();appliedStyle.current=styleUrl;
-    setFailed(false);setStatus('Kaart laden…');
-    // Diffed styles do not emit style.load in MapLibre 6. Rebuild only the
-    // style (not the map) so palette/source restoration has one reliable owner.
-    try { map.current.setStyle(styleUrl,{diff:false}); }
-    catch { setFailed(true);setStatus('Kaartstijl niet geladen. Gebruik de lijst of kies opnieuw een modus.'); }
-  },[styleUrl]);
+    };
+    refreshMarkers.current=update;
+    instance.on('idle',update);instance.on('moveend',()=>{
+      if(disposed)return;const center=instance.getCenter();
+      latest.current.setState(previous=>({...previous,camera:{center:[center.lng,center.lat],zoom:instance.getZoom(),bearing:instance.getBearing(),pitch:instance.getPitch()}}));update();
+    });
+    return ()=>{disposed=true;generation.current++;clearMarkers.current();refreshMarkers.current=()=>{};clearMarkers.current=()=>{};};
+    },
+  });
+  const missing=collection.length-data.features.length;
+  function select(key:string) {
+    setState(previous=>({...previous,selectedKey:key}));
+    const point=effectiveLocation(collection.find(home=>home.listing.key===key)!.listing);
+    if (point && map.current) map.current.easeTo({center:[point.lon,point.lat],duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:350});
+  }
+  useLayoutEffect(()=>{if(list.current)list.current.scrollTop=state.listScroll;},[hidden,state.mode]);
   useEffect(()=>{
     const source=map.current?.getSource('homes') as GeoJSONSource | undefined;
     generation.current++;

@@ -165,6 +165,37 @@ and project-wide no-geocoder rules; source neighbourhood/matching facts and the
 per-property source-only iframe are not changed. No browser geocoder/geolocation.
 The surface contract and scoped evidence live in `.impeccable/map-surface-brief.md`.
 
+## Approved single-advertisement map · November 2026
+
+The latest user request supersedes all source-only detail iframe rules below and
+above. The existing location section now holds a 300px MapLibre/CARTO canvas in
+both viewport classes, matching the app's light/dark cartography and square 44px
+controls. Show only the selected listing's validated effective point: source,
+current cached BAG address, or explicitly approximate house-number location.
+No collection legend, list, preview or extra CTA belongs in detail. Keep precision,
+automatic IP/tile-area disclosure and visible CARTO/OSM attribution. Known location
+with missing key/provider failure retains its precision and honest fallback text;
+unknown/stale locations get no canvas or guessed pin. The optional larger-map link
+is omitted. Kaart unmounts during dossier reading; parent-held session restores
+camera, selection, mode and list scroll on return. Theme changes replace only the
+style, restoring the single source/pin without refitting the same map instance.
+
+Scoped evidence: 19/19 location/map-model/theme tests and one `npm run check`
+passed (109 modules; incumbent bootstrap/chunk warnings). Isolated synthetic
+Chromium at 1440×1000 and 390×844 confirmed single-feature/key-only GeoJSON,
+one DOM pin, zero overview canvases in detail, unknown-location/no-canvas and
+honest provider failure, same instance/camera through light/dark changes, plus
+15-home overview clusters and camera/selection/mode/180px scroll restoration.
+Four ignored captures and aggregate evidence: `.impeccable/review/property-map-*`.
+The detector returned three historical-palette advisories, no primary findings.
+Harness-only corrections: native Vite config loading, direct-demo reload and
+border-box control measurement. No application correction/rebuild loop.
+Screenshots show a deliberately panned camera (the pin may be partly off-frame);
+DOM/source counts also checked centred initial and replacement listings.
+BAG/representative/stale cases are unit-tested, not separate browser fixtures;
+missing-key copy is source-inspected. No Safari, real-device/private-account,
+backend, geocoder, release or deployment verification is claimed.
+
 ## Approved light/dark choice · November 2026
 
 Device preference is the initial theme and remains live until an explicit choice.
