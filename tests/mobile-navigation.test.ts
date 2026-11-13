@@ -21,6 +21,8 @@ test('only a changed property key resets New; collection selection is not readin
   assert.equal(mobileScreenKey('favourite','a',null),mobileScreenKey('favourite','b',null));
   assert.equal(mobileScreenKey('dismissed','a',null),mobileScreenKey('dismissed',undefined,null));
   assert.equal(mobileScreenKey('new',undefined,null),'new:empty');
+  assert.equal(mobileScreenKey('map','a',null),'view:map');
+  assert.equal(mobileScreenKey('map','b',null),'view:map');
 });
 test('archive filters current real evaluations, not a personal dismissal reason',()=>{
   const profile={...neutralProfile,maxBudget:75000,minArea:30,checkIncome:true,income:100000};

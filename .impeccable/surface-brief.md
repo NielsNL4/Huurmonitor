@@ -1,4 +1,12 @@
 # Property review · src/App.tsx
+## Approved Kaart extension (supersedes earlier overview/geocoder restrictions)
+The lead-accepted map brief is recorded in `map-surface-brief.md`. Add only the
+separate Kaart destination, linked matches/favourites map/list and temporary
+existing dossier return, inherited dark tokens and five mobile labels. Worker
+cached exact-address BAG points can supplement source points in the overview
+and CBS classification; the existing detail OSM iframe remains source-only.
+No reference reproduction, redesign, new matching criteria or adjacent polish.
+
 ## Approved desktop adaptation (supersedes keep-desktop-unchanged below)
 User requested the mobile design on desktop and confirmed KEEP SIDE-BY-SIDE
 list/detail. Above 760px only, use the actual mobile captures/current code as

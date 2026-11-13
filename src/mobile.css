@@ -207,7 +207,7 @@
   .m-empty h2{font-size:28px}
   .m-empty p{margin:16px 0;color:var(--muted);font-size:13px}
   .m-empty button{font-size:12px}
-  .m-navigation{height:72px;min-height:72px;padding:0 14px env(safe-area-inset-bottom);box-sizing:content-box;display:flex;justify-content:space-around;align-items:stretch;border-top:1px solid var(--line);background:var(--surface)}
+  .m-navigation{height:72px;min-height:72px;padding:0 6px env(safe-area-inset-bottom);box-sizing:content-box;display:flex;justify-content:space-around;align-items:stretch;border-top:1px solid var(--line);background:var(--surface)}
   .mobile-root .m-navigation button{flex:1;position:relative;border:0;min-width:0;min-height:64px;display:flex;flex-direction:column;gap:5px;font-size:9px;text-transform:uppercase;letter-spacing:.08em;padding:12px 2px;color:var(--muted)}
   .mobile-root .m-navigation button[aria-current]{color:var(--ink)}
   .m-navigation button[aria-current]:before{content:'';position:absolute;top:0;height:2px;background:var(--ink);left:12px;right:12px}

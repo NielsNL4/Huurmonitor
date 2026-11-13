@@ -135,6 +135,36 @@ historical frontmatter, not blockers; the approved overrides above are intention
 No real-device/Safari, authenticated/private, live map, production build or
 additional desktop-width rendering claim is made.
 
+## Approved Kaart extension · November 2026
+
+This extends the existing world, not a redesign. New **Kaart** navigation sits
+between Afgewezen and Profiel. Five mobile icon/text destinations fit the existing
+72px bottom bar; keep every label and 44px-or-larger controls. Desktop retains the
+1280px canvas, 350px list and 28px gap, with a large linked map instead of the
+detail pane. Mobile has an explicit Kaart/Lijst switch and compact selected-home
+preview above navigation. Existing dossiers and the source-only detail OSM iframe
+remain unchanged; return restores map camera, selection, mode and list position.
+
+Use incumbent Hanken/Newsreader, near-black canvas, offwhite text/match marks,
+brass heart favourites plus text, fine dividers, square controls and brass focus/
+selected outlines. Prices always carry cost basis/caveat. Missing locations stay
+selectable/countable in the list, not fabricated pins. Identical points cluster
+without jitter and reveal all homes on expansion. No map gesture decides a home.
+
+The managed CARTO Dark Matter style keeps its sources, glyphs and sprites. Only
+safe layer-type/role changes recolour background, water, roads and label/halo
+colours; no copied map style or decorative fake geography. Visible CARTO/OSM
+attribution and direct privacy wording remain. Missing key, quota/style/network
+or WebGL failures show honest fallback copy while the list remains usable.
+MapLibre loads lazily, uses one cleaned-up instance, responds to resize and does
+not refit after every data update/pan. Reduced motion removes camera animation.
+
+CBS provenance now distinguishes source points from current worker-cached BAG
+address locations. This explicitly supersedes earlier source-only classification
+and project-wide no-geocoder rules; source neighbourhood/matching facts and the
+per-property source-only iframe are not changed. No browser geocoder/geolocation.
+The surface contract and scoped evidence live in `.impeccable/map-surface-brief.md`.
+
 # Design System: Huurmonitor
 
 ## Overview

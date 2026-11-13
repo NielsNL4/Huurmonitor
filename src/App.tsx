@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { cloud, configurationError } from './cloud';
 import { demoRuns, initialDemo } from './demo';
@@ -10,16 +10,19 @@ import { priceDisplay } from '../shared/price-display';
 import { PropertyMap } from './PropertyMap';
 import { cbsDocumentation, cbsLicence } from '../shared/official-geography';
 import { listingPresentation } from '../shared/listing-presentation';
+import { CollectionMap } from './CollectionMap';
+import { closeMapDetail, mapCollection, newMapSession, openMapDetail } from './map-model';
 import { MobileRoot } from './MobileRoot';
 import { createEmailAuth, initialEmailAuth } from './email-auth';
 import { AccountPassword } from './AccountPassword';
 import { createAccountScope } from './account-password';
 
-type View = 'new' | 'favourite' | 'dismissed' | 'profile';
-const labels: Record<View, string> = { new: 'Nieuw', favourite: 'Favorieten', dismissed: 'Afgewezen', profile: 'Profiel' };
+type View = 'new' | 'favourite' | 'dismissed' | 'map' | 'profile';
+const labels: Record<View, string> = { new: 'Nieuw', favourite: 'Favorieten', dismissed: 'Afgewezen', map: 'Kaart', profile: 'Profiel' };
 const sources = { gruno: 'Gruno', solide: 'Solide', maxx: 'Maxx' };
 function Icon({ name, size = 20 }: { name: string; size?: number }) {
   const paths: Record<string, string> = { home: 'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9', new: 'M4 5h16v15H4zM8 2v6m8-6v6M4 11h16m-12 4h3', favourite: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z', dismissed: 'M5 5l14 14M19 5 5 19', profile: 'M20 21v-2a7 7 0 0 0-14 0v2M17 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0', next: 'm9 5 7 7-7 7', prev: 'm15 5-7 7 7 7', external: 'M14 3h7v7m0-7L10 14M10 3H3v18h18v-7', pause: 'M9 4v16m6-16v16', play: 'm8 4 12 8-12 8Z', undo: 'M3 10h10a7 7 0 0 1 0 14M3 10l6-6m-6 6 6 6', refresh: 'M20 8a8 8 0 1 0 0 8m0-13v5h-5', location: 'M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0ZM15 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0' };
+  paths.map='m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5Zm6-2v16m6-14v16';
   return <svg width={size} height={size} viewBox="0 0 24 26" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name] || paths.home}/></svg>;
 }
 function readDemo() {
@@ -124,6 +127,7 @@ export default function App() {
   const [homes, setHomes] = useState<Home[]>(() => !cloud ? readDemo().homes : []), [profile, setProfile] = useState<Profile>(() => !cloud ? readDemo().profile : neutralProfile);
   const [runs, setRuns] = useState<SourceRun[]>(() => !cloud ? demoRuns : []), [delivery, setDelivery] = useState('');
   const [view, setView] = useState<View>('new'), [selected, setSelected] = useState(''), [busy, setBusy] = useState(false), [loading, setLoading] = useState(false);
+  const [mapState,setMapState] = useState(newMapSession);
   const [error, setError] = useState(configurationError || ''), [notice, setNotice] = useState(''), [undo, setUndo] = useState<{ key: string; decision: Decision } | null>(null);
   const [emailAuth, setEmailAuth] = useState(initialEmailAuth);
   const [emailActions] = useState(() => createEmailAuth(cloud?.auth ?? null, setEmailAuth));
@@ -140,7 +144,7 @@ export default function App() {
   const mode = useRef<'demo' | 'private' | 'signedout'>(!cloud ? 'demo' : 'signedout');
   function clearPrivateState() {
     setHomes([]); setProfile(neutralProfile); setRuns([]); setDelivery(''); setUndo(null);
-    setNotice(''); setError(configurationError || ''); setBusy(false); setLoading(false); setSelected('');
+    setNotice(''); setError(configurationError || ''); setBusy(false); setLoading(false); setSelected(''); setMapState(newMapSession());
   }
   async function load(owner: string) {
     const db = cloud; if (!db) return;
@@ -177,8 +181,9 @@ export default function App() {
   }, []);
   useEffect(() => { if (session && !demo) void load(session.user.id); }, [session?.user.id, demo, authRevision]);
   useEffect(() => { if (demo) { try { localStorage.setItem('huurmonitor-demo-v1', JSON.stringify({ homes, profile })); } catch { setError('Demo kon niet lokaal worden opgeslagen. Je browser blokkeert opslag.'); } } }, [homes, profile, demo]);
-  const displayed = homes.map(h => ({ ...h, evaluation: evaluate(h.listing, profile) }));
-  const filtered = displayed.filter(h => view === 'new' ? h.decision === 'new' && h.evaluation.eligible : h.decision === view);
+  const displayed = useMemo(()=>homes.map(h => ({ ...h, evaluation: evaluate(h.listing, profile) })),[homes,profile]);
+  const filtered = view === 'map' ? mapCollection(displayed,profile) : displayed.filter(h => view === 'new' ? h.decision === 'new' && h.evaluation.eligible : h.decision === view);
+  const mapDetail = view === 'map' ? displayed.find(h=>h.listing.key===mapState.detailKey) : undefined;
   const active = filtered.find(h => h.listing.key === selected) || filtered[0];
   const activeIndex = active ? filtered.indexOf(active) : 0;
   const activeKey = active?.listing.key;
@@ -186,7 +191,7 @@ export default function App() {
     // Both layouts scroll the main reading viewport, not the document or detail column.
     if (activeKey) reading.current?.scrollTo({ top: 0, behavior: 'instant' });
   }, [activeKey]);
-  function switchView(next: View) { setView(next); setSelected(''); window.scrollTo({ top: 0 }); document.getElementById('main')?.scrollTo({ top: 0 }); }
+  function switchView(next: View) { setView(next); setSelected(''); setMapState(previous=>closeMapDetail(previous)); window.scrollTo({ top: 0 }); document.getElementById('main')?.scrollTo({ top: 0 }); }
   async function changeDecision(key: string, decision: Decision, remember = true) {
     const old = homes.find(h => h.listing.key === key); if (!old) return;
     const operation = !demo && session ? privateScope.current.capture(session.user.id) : null;
@@ -227,7 +232,7 @@ export default function App() {
   const selectHome = (key: string) => { setSelected(key); };
   const totalNew = displayed.filter(h => h.decision === 'new' && h.evaluation.eligible).length;
   const accountSettings = cloud && session && !demo ? <AccountPassword key={session.user.id} owner={session.user.id} scope={accountScope.current} mobile={mobile}/> : null;
-  if (mobile && (demo || session)) return <MobileRoot accountSettings={accountSettings} view={view} switchView={switchView} homes={displayed} active={active} filtered={filtered} selectHome={selectHome} profile={profile} demo={demo} busy={busy} loading={loading} error={error} notice={notice} undo={undo} changeDecision={(key,decision,remember) => void changeDecision(key,decision,remember)} save={p => void saveProfile(p)} runs={runs} delivery={delivery} Gallery={Gallery} refresh={!demo && session ? () => void load(session.user.id) : undefined} accountActions={<>{session && !demo && <button onClick={signOut}>Uitloggen</button>}{cloud && demo && <button onClick={leaveDemo}>Naar privéprofiel</button>}</>}/>;
+  if (mobile && (demo || session)) return <MobileRoot key={demo?'demo':session?.user.id} mapState={mapState} setMapState={setMapState} accountSettings={accountSettings} view={view} switchView={switchView} homes={displayed} active={active} filtered={filtered} selectHome={selectHome} profile={profile} demo={demo} busy={busy} loading={loading} error={error} notice={notice} undo={undo} changeDecision={(key,decision,remember) => void changeDecision(key,decision,remember)} save={p => void saveProfile(p)} runs={runs} delivery={delivery} Gallery={Gallery} refresh={!demo && session ? () => void load(session.user.id) : undefined} accountActions={<>{session && !demo && <button onClick={signOut}>Uitloggen</button>}{cloud && demo && <button onClick={leaveDemo}>Naar privéprofiel</button>}</>}/>;
   return <>
     <a className="skip-link" href="#main">Naar inhoud</a><header className="app-header"><a className="brand" href="#" onClick={e => { e.preventDefault(); switchView('new'); }}><span className="brand-mark"><Icon name="home" size={23}/></span>Huurmonitor</a><div className="account">{demo ? <span className="demo-tag">Demomodus</span> : <span className="private-tag">Privé</span>}{session && !demo && <button onClick={signOut}>Uitloggen</button>}{cloud && demo && <button onClick={leaveDemo}>Naar privéprofiel</button>}</div></header>
     <nav className="navigation" aria-label="Hoofdnavigatie">{(Object.keys(labels) as View[]).map(v => <button key={v} onClick={() => switchView(v)} aria-current={view === v ? 'page' : undefined}><Icon name={v}/><span>{labels[v]}</span>{v === 'new' && totalNew > 0 && <span className="count">{totalNew}</span>}</button>)}</nav>
@@ -243,7 +248,10 @@ export default function App() {
           <button className="primary" type="submit" disabled={emailAuth.busy || !cloud}>{emailAuth.busy ? 'Inloggen…' : 'Inloggen'}</button>
           {emailAuth.error && <p className="error" role="alert">{emailAuth.error}</p>}
         </form>
-        <button onClick={enterDemo}>Eerst de demo bekijken</button></section> : view === 'profile' ? <><ProfileForm value={profile} busy={busy} demo={demo} save={p => void saveProfile(p)}/>{accountSettings}</> : <>
+        <button onClick={enterDemo}>Eerst de demo bekijken</button></section> : view === 'profile' ? <><ProfileForm value={profile} busy={busy} demo={demo} save={p => void saveProfile(p)}/>{accountSettings}</> : view === 'map' ? <>
+          <CollectionMap homes={displayed} profile={profile} demo={demo} state={mapState} setState={setMapState} hidden={!!mapDetail} open={key=>{setMapState(previous=>openMapDetail(previous,key));reading.current?.scrollTo({top:0,behavior:'instant'});}}/>
+          {mapDetail&&<div className="cm-detail"><button className="cm-back" onClick={()=>setMapState(previous=>closeMapDetail(previous))}>Terug naar kaart</button><Property key={mapDetail.listing.key} home={mapDetail} profile={profile} demo={demo} busy={busy} onDecision={decision=>void changeDecision(mapDetail.listing.key,decision)}/></div>}
+        </> : <>
         <div className="view-heading"><div><h1>{labels[view] === 'Nieuw' ? 'Nieuwe matches' : labels[view]}</h1><p>{view === 'new' ? 'Bekijk één woning tegelijk. Bewaar wat bij je past.' : view === 'favourite' ? 'Jouw bewaarde woningen. Ook als feiten of beschikbaarheid veranderen.' : 'Niet voor nu. Je kunt elke woning herstellen.'}</p></div>{!demo && session && <button disabled={loading} onClick={() => void load(session.user.id)}><Icon name="refresh"/>{loading ? 'Laden…' : 'Vernieuwen'}</button>}</div>
         <div className="workspace"><aside className="listing-column"><div className="list-header"><strong>{filtered.length} {view === 'new' ? demo ? 'passende voorbeelden' : 'matches' : 'woningen'}</strong><button className="text-button" onClick={() => switchView('profile')}>Zoekprofiel</button></div><div className="property-list">{filtered.map(h => { const price = priceDisplay(h.listing); return <button key={h.listing.key} className={`list-item ${active?.listing.key === h.listing.key ? 'selected' : ''}`} onClick={() => selectHome(h.listing.key)} aria-pressed={active?.listing.key === h.listing.key}>{h.listing.photos[0] ? <img src={h.listing.photos[0]} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden'; }}/>: <span className="list-photo-fallback"><Icon name="home" size={24}/></span>}<span className="list-item-text"><span className="list-source">{sources[h.listing.source]} · {h.listing.type || 'Type onbekend'}</span><strong>{h.listing.title}</strong><span>{money(price.amount)} <small>{price.advertisedFallback ? `${price.label} · ${price.caveat}` : 'bekend / mnd'}</small></span><small>{h.listing.area === null ? 'Oppervlak onbekend' : `${h.listing.area.toLocaleString('nl-NL')} m²`} · {h.listing.city || 'Locatie onbekend'}</small>{h.evaluation.verdict !== 'pass' && <small className="uncertain">{h.evaluation.verdict === 'unknown' ? 'Vereiste gegevens onzeker' : 'Voldoet nu niet'}</small>}</span></button>; })}</div><SourceStatus runs={runs} demo={demo} delivery={delivery}/></aside>
         <div className="detail-column">{loading && !homes.length ? <div className="loading-state" aria-busy="true">Privéwoningen laden…</div> : active ? <><div className="property-pager"><span>{activeIndex + 1} van {filtered.length} {demo ? 'voorbeelden' : 'woningen'}</span><div><button disabled={activeIndex === 0} onClick={() => selectHome(filtered[activeIndex - 1].listing.key)} aria-label="Vorige woning"><Icon name="prev"/></button><button disabled={activeIndex === filtered.length - 1} onClick={() => selectHome(filtered[activeIndex + 1].listing.key)} aria-label="Volgende woning"><Icon name="next"/></button></div></div><Property key={active.listing.key} home={active} profile={profile} demo={demo} busy={busy} onDecision={d => void changeDecision(active.listing.key,d)}/></> : <div className="empty-state"><Icon name={view} size={36}/><h2>{view === 'new' ? 'Je bent bij met je matches' : view === 'favourite' ? 'Nog geen favorieten' : 'Nog niets afgewezen'}</h2><p>{view === 'new' ? 'Dit betekent niet dat er geen aanbod is. Controleer bronstatus en je zoekprofiel; onbekende vereiste gegevens worden standaard niet toegelaten.' : 'Je keuzes verschijnen hier. Bij Nieuw kun je woningen bekijken en bewaren of afwijzen.'}</p><button onClick={() => switchView(view === 'new' ? 'profile' : 'new')}>{view === 'new' ? 'Bekijk zoekprofiel' : 'Naar nieuwe matches'}</button></div>}</div></div>

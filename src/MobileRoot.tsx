@@ -1,17 +1,20 @@
-import { useLayoutEffect, useRef, useState, type ComponentType, type PointerEvent, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type ComponentType, type Dispatch, type SetStateAction, type PointerEvent, type ReactNode } from 'react';
 import { money, type Decision, type Home, type Listing, type Profile, type SourceRun } from '../shared/model';
 import { listingPresentation } from '../shared/listing-presentation';
 import { cbsDocumentation, cbsLicence } from '../shared/official-geography';
+import { CollectionMap } from './CollectionMap';
+import { closeMapDetail, openMapDetail, type MapSession } from './map-model';
 import { PropertyMap } from './PropertyMap';
 import { MobileProfile, MobileSources } from './MobileProfile';
 import { MobileIcon } from './mobile-icons';
 import { archiveMatches, mobileScreenKey, openDossier, type ArchiveFilter, type CollectionView, type DossierSelection, type MobileView } from './mobile-navigation';
 import './mobile.css';
 
-const labels = { new:'Nieuw', favourite:'Favorieten', dismissed:'Afgewezen', profile:'Profiel' };
+const labels = { new:'Nieuw', favourite:'Favorieten', dismissed:'Afgewezen', map:'Kaart', profile:'Profiel' };
 const sources = { gruno:'Gruno Verhuur', solide:'Solide Verhuur', maxx:'Maxx' };
 type GalleryComponent = ComponentType<{ listing: Listing; demo: boolean; presentation?: 'story' | 'dossier' }>;
 interface Props {
+  mapState: MapSession; setMapState: Dispatch<SetStateAction<MapSession>>;
   view: MobileView; switchView: (view: MobileView) => void;
   homes: Home[]; active: Home | undefined; filtered: Home[]; selectHome: (key: string) => void;
   profile: Profile; demo: boolean; busy: boolean; loading: boolean;
@@ -32,14 +35,14 @@ export function MobileRoot(props: Props) {
   const [archiveFilter,setArchiveFilter] = useState<ArchiveFilter>('all');
   const reading = useRef<HTMLElement>(null);
   const restore = useRef<number | null>(null);
-  const detail = dossier ? homes.find(h=>h.listing.key===dossier.key) : undefined;
-  const screenKey = mobileScreenKey(view,active?.listing.key,dossier);
+  const detail = view==='map' ? homes.find(h=>h.listing.key===props.mapState.detailKey) : dossier ? homes.find(h=>h.listing.key===dossier.key) : undefined;
+  const screenKey = view==='map' && detail ? `map-dossier:${detail.listing.key}` : mobileScreenKey(view,active?.listing.key,dossier);
   useLayoutEffect(()=>{
     reading.current?.scrollTo({top:restore.current ?? 0,behavior:'instant'});
     restore.current=null;
   },[screenKey]);
   function navigate(next: MobileView) { setDossier(null); restore.current=null; props.switchView(next); if(next===view)reading.current?.scrollTo({top:0,behavior:'instant'}); }
-  function back() { if(!dossier)return; restore.current=dossier.scrollTop; props.switchView(dossier.origin); setDossier(null); }
+  function back() { if(view==='map'){props.setMapState(previous=>closeMapDetail(previous));return;} if(!dossier)return; restore.current=dossier.scrollTop; props.switchView(dossier.origin); setDossier(null); }
   function open(home:Home,origin:CollectionView) { setDossier(openDossier(home.listing.key,origin,reading.current?.scrollTop ?? 0)); }
   const favouriteHomes=homes.filter(h=>h.decision==='favourite');
   const archivedHomes=homes.filter(h=>h.decision==='dismissed');
@@ -52,7 +55,7 @@ export function MobileRoot(props: Props) {
   return <div className={`mobile-root m-${detail?'dossier':view}`}>
     <a className="skip-link" href="#main">Naar inhoud</a>
     <header className="m-masthead">
-      {detail?<button className="m-detail-back" onClick={back}><MobileIcon name="back"/><span>Woning Details</span></button>:<button className="m-wordmark" onClick={()=>navigate('new')}>Huurmonitor</button>}
+      {detail?<button className="m-detail-back" onClick={back}><MobileIcon name="back"/><span>{view==='map'?'Terug naar kaart':'Woning Details'}</span></button>:<button className="m-wordmark" onClick={()=>navigate('new')}>Huurmonitor</button>}
       {view==='new'&&!detail&&<><span className="m-header-meta">Groningen · {demo?'Demo':'Overzicht'}</span><span className="m-header-count">{active?activeIndex+1:0} van {filtered.length}</span></>}
       {view==='favourite'&&!detail&&<><span className="m-header-meta">Groningen</span><span className="m-saved-count">{favouriteHomes.length} bewaard</span></>}
       {(detail||view==='favourite'||view==='dismissed')&&<button className="m-account" aria-label="Naar profiel" onClick={()=>navigate('profile')}><MobileIcon name="account" size={16}/></button>}
@@ -62,10 +65,11 @@ export function MobileRoot(props: Props) {
       {error&&<div className="m-feedback m-error" role="alert">{error}</div>}
       <div className="m-announcement" role="status" aria-live="polite">{notice&&<p>{notice}</p>}{undo&&<button disabled={busy} onClick={()=>props.changeDecision(undo.key,undo.decision,false)}><MobileIcon name="undo" size={15}/>Ongedaan maken</button>}</div>
       {!demo&&runs.some(r=>r.status==='failed')&&<p className="m-feedback">Een of meer bronnen konden niet worden gelezen. Eerdere woningen blijven bewaard; controleer de bronstatus.</p>}
+      {view==='map'&&<CollectionMap homes={homes} profile={profile} demo={demo} state={props.mapState} setState={props.setMapState} hidden={!!detail} open={key=>props.setMapState(previous=>openMapDetail(previous,key))}/>}
       {detail?<>
-        <div className="m-overview-row"><button onClick={back}><MobileIcon name="back" size={12}/>Terug naar overzicht</button><button disabled={busy} aria-label={detail.decision==='favourite'?'Uit favorieten':'Bewaren'} aria-pressed={detail.decision==='favourite'} onClick={()=>props.changeDecision(detail.listing.key,detail.decision==='favourite'?'new':'favourite')}><MobileIcon name="favourite"/></button></div>
+        <div className="m-overview-row"><button onClick={back}><MobileIcon name="back" size={12}/>{view==='map'?'Terug naar kaart':'Terug naar overzicht'}</button><button disabled={busy} aria-label={detail.decision==='favourite'?'Uit favorieten':'Bewaren'} aria-pressed={detail.decision==='favourite'} onClick={()=>props.changeDecision(detail.listing.key,detail.decision==='favourite'?'new':'favourite')}><MobileIcon name="favourite"/></button></div>
         <MobileProperty home={detail} demo={demo} busy={busy} dossier Gallery={Gallery} onDecision={d=>props.changeDecision(detail.listing.key,d)}/>
-      </>:view==='profile'?<MobileProfile value={profile} busy={busy} demo={demo} save={props.save} accountActions={props.accountActions} accountSettings={props.accountSettings} runs={runs} delivery={delivery}/>:view==='new'?<>
+      </>:view==='map'?null:view==='profile'?<MobileProfile value={profile} busy={busy} demo={demo} save={props.save} accountActions={props.accountActions} accountSettings={props.accountSettings} runs={runs} delivery={delivery}/>:view==='new'?<>
         {active?<>
           <div className="m-source-strip"><span>{sources[active.listing.source]} · {listingPresentation(active.listing).headerLocation||active.listing.city||'Locatie niet vermeld'}</span><div><span>{demo?'Waarneming':'Laatst gezien'} {new Date(active.listing.observedAt).toLocaleDateString('nl-NL')}</span><div className="m-home-pager"><button aria-label="Vorige woning" disabled={activeIndex===0} onClick={()=>props.selectHome(filtered[activeIndex-1].listing.key)}><MobileIcon name="back" size={12}/></button><button aria-label="Volgende woning" disabled={activeIndex===filtered.length-1} onClick={()=>props.selectHome(filtered[activeIndex+1].listing.key)}><MobileIcon name="back" size={12}/></button></div></div></div>
           <MobileProperty home={active} demo={demo} busy={busy} Gallery={Gallery} onDecision={d=>props.changeDecision(active.listing.key,d)}/>
@@ -79,7 +83,7 @@ export function MobileRoot(props: Props) {
         {view==='dismissed'&&<p className="m-retention">Afgewezen woningen blijven bewaard. Herstellen toont alleen passende woningen bij Nieuw.</p>}
       </>}
     </main>
-    <nav className={`m-navigation ${view==='new'||view==='profile'?'m-text-nav':''}`} aria-label="Hoofdnavigatie">{(Object.keys(labels) as MobileView[]).map(v=><button key={v} aria-current={view===v?'page':undefined} onClick={()=>navigate(v)}>{view!=='new'&&view!=='profile'&&<MobileIcon name={v} size={18}/>}<span>{labels[v]}</span>{v==='new'&&totalNew>0&&<span className="m-nav-count">{totalNew}</span>}</button>)}</nav>
+    <nav className="m-navigation" aria-label="Hoofdnavigatie">{(Object.keys(labels) as MobileView[]).map(v=><button key={v} aria-current={view===v?'page':undefined} onClick={()=>navigate(v)}><MobileIcon name={v} size={18}/><span>{labels[v]}</span>{v==='new'&&totalNew>0&&<span className="m-nav-count">{totalNew}</span>}</button>)}</nav>
   </div>;
 }
 

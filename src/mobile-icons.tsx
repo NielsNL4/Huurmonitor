@@ -1,5 +1,6 @@
-export function MobileIcon({ name, size = 18 }: { name: 'new' | 'favourite' | 'dismissed' | 'profile' | 'account' | 'back' | 'external' | 'check' | 'search' | 'undo'; size?: number }) {
+export function MobileIcon({ name, size = 18 }: { name: 'new' | 'favourite' | 'dismissed' | 'map' | 'profile' | 'account' | 'back' | 'external' | 'check' | 'search' | 'undo'; size?: number }) {
   const paths = {
+    map: 'm3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5Zm6-2v16m6-14v16',
     new: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-3 12 2-5 4-1-2 5-4 1Z',
     favourite: 'M6 3h12v18l-6-4-6 4V3Z',
     dismissed: 'M4 7h16v14H4V7Zm-1-4h18v4H3V3Zm6 8h6',

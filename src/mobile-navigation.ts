@@ -1,7 +1,7 @@
 import type { Home } from '../shared/model';
 import { listingPresentation } from '../shared/listing-presentation';
 
-export type MobileView = 'new' | 'favourite' | 'dismissed' | 'profile';
+export type MobileView = 'new' | 'favourite' | 'dismissed' | 'map' | 'profile';
 export type CollectionView = 'favourite' | 'dismissed';
 export interface DossierSelection { key: string; origin: CollectionView; scrollTop: number }
 export function openDossier(key: string, origin: CollectionView, scrollTop: number): DossierSelection {
