@@ -22,9 +22,46 @@ export type AccountScope = ReturnType<typeof createAccountScope>;
 
 function safeError(error: unknown) {
   const code = error && typeof error === 'object' && 'code' in error ? error.code : null;
-  if (code === 'reauthentication_needed' || code === 'reauthentication_not_valid')
-    return 'De provider vereist extra verificatie. Log opnieuw in voordat je het opnieuw probeert. Als een verificatiecode of e-mail nodig is, stop dan: deze app ondersteunt die extra verificatie niet.';
-  return 'Wachtwoord niet ingesteld. Probeer opnieuw of log opnieuw in. De provider kan strengere wachtwoordeisen stellen.';
+  // Only fixed, allowlisted diagnostics may reach the UI; never use error.message.
+  switch (code) {
+    case 'weak_password':
+      return 'Dit wachtwoord voldoet niet aan de wachtwoordeisen.';
+    case 'same_password':
+      return 'Dit wachtwoord gebruik je al.';
+    case 'reauthentication_needed':
+      return 'Extra verificatie nodig.';
+    case 'reauthentication_not_valid':
+      return 'Verificatie mislukt.';
+    case 'session_expired':
+      return 'Je sessie is verlopen.';
+    case 'session_not_found':
+      return 'Geen actieve sessie.';
+    case 'refresh_token_not_found':
+      return 'Geen actieve sessie.';
+    case 'refresh_token_already_used':
+      return 'Je sessie is verlopen.';
+    case 'bad_jwt':
+      return 'Je sessie is ongeldig.';
+    case 'no_authorization':
+      return 'Je sessie is ongeldig.';
+    case 'validation_failed':
+      return 'Wachtwoord instellen mislukt.';
+    case 'over_request_rate_limit':
+      return 'Te veel pogingen. Probeer het later opnieuw.';
+    case 'over_email_send_rate_limit':
+      return 'Te veel pogingen. Probeer het later opnieuw.';
+    case 'over_sms_send_rate_limit':
+      return 'Te veel pogingen. Probeer het later opnieuw.';
+  }
+  const name = error && typeof error === 'object' && 'name' in error ? error.name : null;
+  if (name === 'AuthSessionMissingError')
+    return 'Geen actieve sessie.';
+  const status = error && typeof error === 'object' && 'status' in error ? error.status : null;
+  if (status === 429)
+    return 'Te veel pogingen. Probeer het later opnieuw.';
+  if (name === 'AuthRetryableFetchError')
+    return 'Geen verbinding. Probeer opnieuw.';
+  return 'Er ging iets mis. Probeer opnieuw.';
 }
 
 /** Credentials exist only as transient arguments, never in controller state. */
@@ -33,8 +70,11 @@ export function createAccountPassword(auth: Auth | null, scope: AccountScope, ow
   async function submit(password: string, confirmation: string) {
     const current = scope.capture(owner), captured = revision;
     if (!auth || !current || inFlight) return;
-    if (password.length < 12 || password !== confirmation) {
-      publish({ ...initialAccountPassword, error: password.length < 12 ? 'Gebruik minimaal 12 tekens.' : 'De wachtwoorden zijn niet gelijk.' });
+    const passwordError = password.length < 8 ? 'Gebruik minimaal 8 tekens.'
+      : !/[a-z]/.test(password) ? 'Gebruik minstens één kleine letter.'
+      : !/[A-Z]/.test(password) ? 'Gebruik minstens één hoofdletter.' : '';
+    if (passwordError || password !== confirmation) {
+      publish({ ...initialAccountPassword, error: passwordError || 'De wachtwoorden zijn niet gelijk.' });
       return;
     }
     inFlight = true;
@@ -43,7 +83,7 @@ export function createAccountPassword(auth: Auth | null, scope: AccountScope, ow
       const result = await auth.updateUser({ password });
       if (!current() || captured !== revision) return;
       if (result.error) throw result.error;
-      publish({ ...initialAccountPassword, success: 'Wachtwoord ingesteld. Je kunt hiermee op je andere apparaat inloggen met hetzelfde e-mailadres.' });
+      publish({ ...initialAccountPassword, success: 'Wachtwoord opgeslagen.' });
     } catch (error) {
       if (current() && captured === revision) publish({ ...initialAccountPassword, error: safeError(error) });
     } finally { inFlight = false; }

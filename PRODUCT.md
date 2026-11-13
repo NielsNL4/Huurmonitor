@@ -69,6 +69,7 @@ Requested one-time full attempt (2026-11-11) plus one allowed focused Maxx repai
 - Make cost and eligibility uncertainty visible.
 - Show genuinely actionable listings rather than trusting availability badges alone.
 - Keep the first release personal and limited to three sources; scale later.
+- Ask the user before introducing or changing user-facing requirements, security/password policies, limits or consequential defaults. Never impose an agent-preferred rule as a product requirement; explain unavoidable provider constraints and ask about unresolved choices before implementation.
 
 ## Open Decisions
 

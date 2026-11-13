@@ -15,6 +15,7 @@ import { closeMapDetail, mapCollection, newMapSession, openMapDetail } from './m
 import { MobileRoot } from './MobileRoot';
 import { createEmailAuth, initialEmailAuth } from './email-auth';
 import { AccountPassword } from './AccountPassword';
+import { PasswordField } from './PasswordField';
 import { createAccountScope } from './account-password';
 
 type View = 'new' | 'favourite' | 'dismissed' | 'map' | 'profile';
@@ -132,8 +133,10 @@ export default function App() {
   const [emailAuth, setEmailAuth] = useState(initialEmailAuth);
   const [emailActions] = useState(() => createEmailAuth(cloud?.auth ?? null, setEmailAuth));
   const passwordInput = useRef<HTMLInputElement>(null);
+  const [loginPasswordVisible, setLoginPasswordVisible] = useState(false);
   function resetEmailAuth(email = '') {
-    if (passwordInput.current) passwordInput.current.value = '';
+    if (passwordInput.current) { passwordInput.current.value = ''; passwordInput.current.type = 'password'; }
+    setLoginPasswordVisible(false);
     emailActions.reset(email);
   }
   const [authRevision, setAuthRevision] = useState(0);
@@ -224,6 +227,8 @@ export default function App() {
     if (!input) return;
     void emailActions.signIn(input.value);
     input.value = '';
+    input.type = 'password';
+    setLoginPasswordVisible(false);
   }
   function switchAccountOwner(owner: string | null) { accountScope.current.switchOwner(owner); accountOwner.current = owner; }
   const enterDemo = () => { resetEmailAuth(); switchAccountOwner(null); privateScope.current.switchOwner(null); mode.current = 'demo'; clearPrivateState(); const saved = readDemo(); setDemo(true); setHomes(saved.homes); setProfile(saved.profile); setRuns(demoRuns); setView('new'); };
@@ -244,7 +249,7 @@ export default function App() {
       {!demo && !session ? <section className="signin"><h1>Inloggen</h1><p>Gebruik het e-mailadres en wachtwoord van je bestaande account.</p>
         <form onSubmit={signIn} aria-busy={emailAuth.busy}>
           <label>E-mailadres<input type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required disabled={emailAuth.busy} value={emailAuth.email} onChange={e => resetEmailAuth(e.target.value)}/></label>
-          <label>Wachtwoord<input ref={passwordInput} type="password" autoComplete="current-password" required disabled={emailAuth.busy}/></label>
+          <PasswordField label="Wachtwoord voor inloggen" inputRef={passwordInput} visible={loginPasswordVisible} toggle={() => setLoginPasswordVisible(value => !value)} autoComplete="current-password" required disabled={emailAuth.busy}/>
           <button className="primary" type="submit" disabled={emailAuth.busy || !cloud}>{emailAuth.busy ? 'Inloggen…' : 'Inloggen'}</button>
           {emailAuth.error && <p className="error" role="alert">{emailAuth.error}</p>}
         </form>
