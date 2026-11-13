@@ -9,7 +9,7 @@ export function MobileSources({ runs, demo, delivery }: { runs: SourceRun[]; dem
     <p className="m-note">{demo?'Demo: geen bronchecks of e-mail.':delivery?`E-mail: ${delivery}.`:'E-mailaflevering is hier niet live bevestigd.'} Een verdwenen advertentie bewijst geen onbeschikbaarheid.</p>
   </section>;
 }
-export function MobileProfile({ value, busy, demo, save, accountActions, runs, delivery }: { value:Profile;busy:boolean;demo:boolean;save:(p:Profile)=>void;accountActions:ReactNode;runs:SourceRun[];delivery:string }) {
+export function MobileProfile({ value, busy, demo, save, accountActions, accountSettings, runs, delivery }: { value:Profile;busy:boolean;demo:boolean;save:(p:Profile)=>void;accountActions:ReactNode;accountSettings:ReactNode;runs:SourceRun[];delivery:string }) {
   const [draft,setDraft]=useState(value);
   useEffect(()=>setDraft(value),[value]);
   const number=(key:'minBudget'|'maxBudget'|'minArea'|'minBedrooms'|'income',label:string,isMoney=false)=><label className="m-number"><span>{label}</span><span className="m-number-value">{isMoney&&<span>€</span>}<input aria-label={label} type="number" min="0" step={key==='minBedrooms'?'1':'0.01'} placeholder="Geen grens" value={draft[key]===null?'':draft[key]!/(isMoney?100:1)} onChange={e=>setDraft({...draft,[key]:e.target.value===''?null:Math.round(Number(e.target.value)*100)/(isMoney?1:100)})}/></span></label>;
@@ -18,7 +18,7 @@ export function MobileProfile({ value, busy, demo, save, accountActions, runs, d
   // A display scale only, never a hard budget cap: numeric fields remain unbounded
   // and nullable. No thumb/default value is invented for an unspecified bound.
   const scaleMax=budgets.length?Math.max(100,Math.ceil(Math.max(...budgets)*1.5/10000)*10000):0;
-  return <form className="m-profile" onSubmit={e=>{e.preventDefault();if(!invalid)save(draft);}}>
+  return <><form className="m-profile" onSubmit={e=>{e.preventDefault();if(!invalid)save(draft);}}>
     <header className="m-profile-intro"><p className="m-operational"><i/>{demo?'Lokale demonstratie':'Automatisering gepauzeerd'}</p><h1>Zoekprofiel & Voorkeuren</h1><p>{demo?'Probeer je voorkeuren uit, alleen in deze browser.':'Laatste bevestiging: GitHub-billingblokkade. De planning wordt hier niet live uitgelezen.'}</p></header>
     <section className="m-profile-section"><span className="m-eyebrow">Opgeslagen zoekprofiel</span><h2>{demo?'Demoprofiel':'Privéprofiel'}</h2><p className="m-note">Geen geverifieerd dossier of inkomensverklaring. Wijzigingen worden pas bewaard na opslaan.</p><div className="m-account-actions">{accountActions}</div><label className="m-digest"><span><strong>E-mail over nieuwe matches</strong><small>Alleen nieuwe kwalificerende wijzigingen; geen dagelijkse lege digest.</small></span><input type="checkbox" role="switch" aria-label="E-mail over nieuwe matches" checked={draft.emailEnabled} onChange={e=>setDraft({...draft,emailEnabled:e.target.checked})}/></label><p className="m-note">De voorkeur alleen activeert geen worker of mailtransport.</p></section>
     <section className="m-profile-section"><span className="m-eyebrow">Geografische selectie</span><h2>Plaats</h2><p className="m-city">{draft.city}</p><p className="m-note">CBS-buurt en -wijk zijn woninginformatie, geen zoekfilters in dit profiel.</p></section>
@@ -32,5 +32,5 @@ export function MobileProfile({ value, busy, demo, save, accountActions, runs, d
     <section className="m-profile-section"><span className="m-eyebrow">Verhuurderscriteria</span><h2>Inkomen & onzekerheid</h2><label className="m-check"><input type="checkbox" checked={draft.checkIncome} onChange={e=>setDraft({...draft,checkIncome:e.target.checked})}/><span>Expliciete inkomenseisen vergelijken<small>Niet vermelde eisen blijven onbekend. Geen inkomensscreening of dossierverificatie.</small></span></label>{draft.checkIncome&&number('income','Bruto maandinkomen (€)',true)}</section>
     <MobileSources runs={runs} demo={demo} delivery={delivery}/>
     <div className="m-save-profile"><button className="m-primary" disabled={busy||invalid} type="submit"><MobileIcon name="profile"/>{busy?'Opslaan…':'Voorkeuren opslaan'}</button><p className="m-note">{demo?'Alleen in deze browser opgeslagen.':'Privé opslaan; dit scherm herberekent meteen.'} Opslaan start geen scan.</p></div>
-  </form>;
+  </form>{accountSettings}</>;
 }

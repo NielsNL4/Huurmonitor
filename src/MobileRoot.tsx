@@ -18,7 +18,7 @@ interface Props {
   error: string; notice: string; undo: { key:string;decision:Decision } | null;
   changeDecision: (key:string,decision:Decision,remember?:boolean) => void;
   save: (profile:Profile) => void; runs: SourceRun[]; delivery: string;
-  accountActions: ReactNode; refresh: (() => void) | undefined; Gallery: GalleryComponent;
+  accountActions: ReactNode; accountSettings: ReactNode; refresh: (() => void) | undefined; Gallery: GalleryComponent;
 }
 const verdictText = { pass:'Voldoet', fail:'Voldoet niet', unknown:'Onbekend' };
 const area = (listing: Listing) => listing.area === null ? 'Niet vermeld' : `${listing.area.toLocaleString('nl-NL')} m²`;
@@ -65,7 +65,7 @@ export function MobileRoot(props: Props) {
       {detail?<>
         <div className="m-overview-row"><button onClick={back}><MobileIcon name="back" size={12}/>Terug naar overzicht</button><button disabled={busy} aria-label={detail.decision==='favourite'?'Uit favorieten':'Bewaren'} aria-pressed={detail.decision==='favourite'} onClick={()=>props.changeDecision(detail.listing.key,detail.decision==='favourite'?'new':'favourite')}><MobileIcon name="favourite"/></button></div>
         <MobileProperty home={detail} demo={demo} busy={busy} dossier Gallery={Gallery} onDecision={d=>props.changeDecision(detail.listing.key,d)}/>
-      </>:view==='profile'?<MobileProfile value={profile} busy={busy} demo={demo} save={props.save} accountActions={props.accountActions} runs={runs} delivery={delivery}/>:view==='new'?<>
+      </>:view==='profile'?<MobileProfile value={profile} busy={busy} demo={demo} save={props.save} accountActions={props.accountActions} accountSettings={props.accountSettings} runs={runs} delivery={delivery}/>:view==='new'?<>
         {active?<>
           <div className="m-source-strip"><span>{sources[active.listing.source]} · {active.listing.neighbourhood||active.listing.city||'Locatie niet vermeld'}</span><div><span>{demo?'Waarneming':'Laatst gezien'} {new Date(active.listing.observedAt).toLocaleDateString('nl-NL')}</span><div className="m-home-pager"><button aria-label="Vorige woning" disabled={activeIndex===0} onClick={()=>props.selectHome(filtered[activeIndex-1].listing.key)}><MobileIcon name="back" size={12}/></button><button aria-label="Volgende woning" disabled={activeIndex===filtered.length-1} onClick={()=>props.selectHome(filtered[activeIndex+1].listing.key)}><MobileIcon name="back" size={12}/></button></div></div></div>
           <MobileProperty home={active} demo={demo} busy={busy} Gallery={Gallery} onDecision={d=>props.changeDecision(active.listing.key,d)}/>
