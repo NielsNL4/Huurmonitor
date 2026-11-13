@@ -23,6 +23,18 @@ test('mandatory_costs_not_doubled: Solide aggregate is not extra', () => {
   for (const [name, total] of [['solide', 78475], ['solide-donders', 95106], ['solide-vondel', 150110]] as const) assert.equal(parse('solide', name).rent.knownMonthly, total);
   assert.match(parse('solide', 'solide-vondel').rent.utilities, /niet inbegrepen/);
 });
+test('generic duplicate field collection uses the first source occurrence, including mixed pair layouts and empty values',()=>{
+  const html=fixture('solide').replace('<dl>','<dl><dt>Wijk:</dt><dd>Eerste omgeving</dd><dt>Wijk</dt><dd>Tweede omgeving</dd><dt>Oppervlakte</dt><dd>31 m²</dd>')+'<table><tr><td>Wijk</td><td>Latere tabel</td></tr><tr><td>Oppervlakte</td><td>99 m²</td></tr></table>';
+  const l=parseListing('solide',html,'https://example.invalid','now');assert.equal(l.neighbourhood,'Eerste omgeving');assert.equal(l.area,31);assert.equal(l.rent.knownMonthly,78475);
+  const repeated=parseListing('solide',html.replace('Tweede omgeving','Eerste omgeving'),'https://example.invalid','now');assert.equal(repeated.neighbourhood,l.neighbourhood);
+  const empty=parseListing('solide',fixture('solide').replace('<dl>','<dl><dt>Wijk</dt><dd></dd><dt>Wijk</dt><dd>Niet kiezen</dd>'),'https://example.invalid','now');assert.equal(empty.neighbourhood,null);
+});
+test('supported source address evidence keeps explicit postcode/suffix; otherwise cautious title parsing stays',()=>{
+  const l=parse('solide');assert.equal(l.addressEvidence?.postcode,'9712GR');assert.equal(l.addressEvidence?.basis,'source-markup');
+  const explicit=fixture('maxx-live')+'<dl><dt>Adres</dt><dd>Voorbeeldstraat 12 A 2, 9712 AB Groningen</dd></dl>';
+  const maxx=parseListing('maxx',explicit,'https://example.invalid/id-123/','now');assert.equal(maxx.addressEvidence?.addition,'2');assert.equal(maxx.addressEvidence?.postcode,'9712 AB');assert.equal(maxx.title,parse('maxx','maxx-live').title);
+  assert.equal(parse('maxx','maxx-live').addressEvidence?.basis,'source-title');
+});
 test('Maxx reconstructed cost/availability regressions', () => {
   assert.equal(parse('maxx').rent.knownMonthly, 73065);
   const rented = parse('maxx', 'maxx-rented'); assert.equal(rented.available, false); assert.equal(rented.rent.knownMonthly, null); assert.equal(rented.bedrooms, null);

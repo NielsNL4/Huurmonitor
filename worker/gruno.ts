@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import type { Coverage, Housing, Listing, Rent } from '../shared/model';
 import { parseGrunoLocation } from './gruno-location';
+import { sourceAddress } from '../shared/address';
 
 interface Tools {
   numberNL: (value: string) => number | null;
@@ -127,6 +128,7 @@ export function parseGruno(html: string, url: string, observedAt: string, tools:
   const income = description.match(/(?:minimum|minimaal|minimale)\s+(?:bruto\s+)?(?:maand)?inkomen[^€\n]{0,25}€\s*([\d.,]+)/i);
   return { key: `gruno:${externalId}`, source: 'gruno', externalId, url: url.split('?')[0], title: address.split(',')[0],
     city: /\bGroningen\b/i.test(address) ? 'Groningen' : null,
+    addressEvidence: sourceAddress(address,/\bGroningen\b/i.test(address) ? 'Groningen' : null),
     type: features.conflict('type object') ? null : housing(features.get('type object') || `${$('.object_details h1.object_title').text()} ${description.slice(0,200)}`),
     area: tools.numberNL(features.get('woonoppervlakte') || ''), bedrooms: tools.numberNL(bedroomText),
     neighbourhood, advertiser: 'Gruno Verhuur', landlord: landlord && tools.redact(landlord) === landlord ? landlord : null, location: parseGrunoLocation(html),

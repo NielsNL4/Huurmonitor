@@ -21,7 +21,7 @@ test('digest matches the dark table preview with real ordered events and useful 
     assert.ok(body.indexOf('Voorbeeldstraat 1')<body.indexOf('Tweede woning'));
     assert.match(body,/Nieuw passend aanbod/);assert.match(body,/Prijs gedaald/);
     assert.match(body,/bekend per maand/);assert.match(body,/geen all-in garantie/);
-    assert.match(body,/Wijk volgens advertentie:/);assert.match(body,/Volgens bron/);assert.match(body,/19,94 m²/);
+    assert.match(body,/Omgeving volgens advertentie/);assert.match(body,/Volgens bron/);assert.match(body,/19,94 m²/);
     assert.doesNotMatch(body,/Voorbeeld ·|geen actueel aanbod|Petrus Campersingel/);
   }
   assert.equal((html.match(/<h2 /g)??[]).length,2);
@@ -61,7 +61,19 @@ test('legacy missing facts stay explicit, source neighbourhood never comes from 
   for(const body of [digestHtml([item]),digestText([item])]){
     assert.match(body,/Onbekend/);assert.match(body,/Niet vermeld/);assert.doesNotMatch(body,/CBS-only|700/);
   }
-  assert.match(digestText([item]),/Wijk volgens advertentie: Niet vermeld\nOppervlakte: Niet vermeld/);
+  assert.match(digestText([item]),/Wijk: Wijk nog niet bepaald\nOppervlakte: Niet vermeld/);
+  assert.doesNotMatch(digestText([item]),/Omgeving volgens advertentie|Wijk volgens advertentie/);
+});
+test('rendering an immutable queued event snapshot uses only its valid geography, never a current-home rebase',()=>{
+  const item=event(),point={lat:53.22,lon:6.57,provenance:'source' as const,precision:'unknown' as const};
+  item.listing.location=point;
+  item.listing.officialGeography={provider:'pdok-cbs',year:2026,version:'0',input:point,status:'known',retrievedAt:'2026-11-13T12:00:00Z',lastAttemptAt:'2026-11-13T12:00:00Z',lastAttemptStatus:'ok',wijk:{code:'WK001404',name:'Fixturewijk'},buurt:{code:'BU00140400',name:'Fixturebuurt'},municipality:{code:'GM0014',name:'Groningen'}};
+  const snapshot=structuredClone(item);
+  for(const body of [digestHtml([item]),digestText([item])]){assert.match(body,/Wijk \(CBS 2026\)/);assert.match(body,/Fixturewijk/);assert.match(body,/Fixturebuurt/);assert.match(body,/broncoördinaten/);assert.doesNotMatch(body,/Wijk nog niet bepaald|Wijk volgens advertentie/);}
+  assert.deepEqual(item,snapshot);
+  const legacy={...item,listing:{...item.listing,officialGeography:null}};
+  for(const body of [digestHtml([legacy]),digestText([legacy])]){assert.match(body,/Wijk nog niet bepaald/);assert.doesNotMatch(body,/Fixturewijk|Fixturebuurt/);}
+  item.listing.location={...point,lat:54};assert.match(digestText([item]),/Wijk nog niet bepaald/);
 });
 test('email reuses headline fallback semantics rather than relabelling headline or base as known monthly', () => {
   const item=event();item.listing.rent.knownMonthly=null;

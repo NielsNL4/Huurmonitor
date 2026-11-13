@@ -62,6 +62,7 @@ Requested one-time full attempt (2026-11-11) plus one allowed focused Maxx repai
 
 ## Product Principles
 
+- One canonical `Listing` JSON serves all source adapters. Presentation derives validated CBS 2026 wijk/buurt and existing price qualifiers from it without a second persisted snapshot or new matching facts. Primary Wijk is CBS-derived; optional raw wording is labelled “Omgeving volgens advertentie”, never a substitute for official geography. Generic duplicate field labels keep the first source value (including an empty first value); dedicated financial conflict/coverage and availability/date safeguards remain authoritative. Explicit supported source addresses preserve suffix and postcode; unsupported forms stay unknown.
 - One understandable profile controls matching and notifications.
 - Make cost and eligibility uncertainty visible.
 - Show genuinely actionable listings rather than trusting availability badges alone.

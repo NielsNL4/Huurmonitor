@@ -8,7 +8,8 @@ import { decide, reconcile } from '../shared/state';
 import { createPrivateScope, loadPrivate } from './private-load';
 import { priceDisplay } from '../shared/price-display';
 import { PropertyMap } from './PropertyMap';
-import { cbsAttribution, cbsDocumentation, cbsLicence, currentOfficialGeography } from '../shared/official-geography';
+import { cbsDocumentation, cbsLicence } from '../shared/official-geography';
+import { listingPresentation } from '../shared/listing-presentation';
 import { MobileRoot } from './MobileRoot';
 import { createEmailAuth, initialEmailAuth } from './email-auth';
 import { AccountPassword } from './AccountPassword';
@@ -62,8 +63,7 @@ function Gallery({ listing, demo, presentation }: { listing: Listing; demo: bool
   </div>;
 }
 function Property({ home, profile, demo, busy, onDecision }: { home: Home; profile: Profile; demo: boolean; busy: boolean; onDecision: (decision: Decision) => void }) {
-  const l = home.listing, evaluation = evaluate(l, profile), price = priceDisplay(l);
-  const official = currentOfficialGeography(l);
+  const l = home.listing, evaluation = evaluate(l, profile), presentation = listingPresentation(l), {price} = presentation;
   const start = useRef<{ x: number; y: number } | null>(null);
   const [drag, setDrag] = useState(0);
   const pointerDown = (e: PointerEvent<HTMLElement>) => { if (e.isPrimary && e.button === 0 && !busy) start.current = { x: e.clientX, y: e.clientY }; };
@@ -87,8 +87,8 @@ function Property({ home, profile, demo, busy, onDecision }: { home: Home; profi
         {Math.abs(drag) > 25 && <span className="drag-label">{drag > 0 ? 'Bewaren' : 'Afwijzen'}</span>}
       </header>
       <div className="price-line"><strong>{money(price.amount)}</strong><span>{price.label}<br/><small>{price.caveat}</small></span></div>
-      <dl className="facts"><div><dt>Oppervlakte</dt><dd>{l.area === null ? 'Onbekend' : `${l.area.toLocaleString('nl-NL')} m²`}</dd></div><div><dt>Beschikbaar per</dt><dd>{l.moveInDate ? <time dateTime={l.moveInDate}>{l.moveIn}</time> : l.moveIn || 'Niet vermeld'}</dd></div><div><dt>Slaapkamers</dt><dd>{l.bedrooms ?? 'Niet vermeld'}</dd></div><div><dt>Wijk volgens advertentie</dt><dd>{l.neighbourhood || 'Niet vermeld'}</dd></div><div><dt>Buurt (CBS)</dt><dd>{official?.status === 'known' ? official.buurt!.name : 'Niet bepaald'}</dd></div><div><dt>Wijk (CBS)</dt><dd>{official?.status === 'known' ? official.wijk!.name : 'Niet bepaald'}</dd></div><div><dt>Aangeboden door</dt><dd>{l.advertiser || sources[l.source]}</dd></div><div><dt>Verhuurder</dt><dd>{l.landlord || 'Niet afzonderlijk vermeld'}</dd></div><div><dt>Gas, water & elektra</dt><dd>{l.rent.utilities}</dd></div></dl>
-      <p className="field-note">{cbsAttribution}. <a href={cbsDocumentation} target="_blank" rel="noreferrer">Bron</a> · <a href={cbsLicence} target="_blank" rel="noreferrer">Licentie</a>{official?.status === 'known' && official.lastAttemptStatus === 'error' && ' · Laatste hercontrole mislukt; eerdere bepaling behouden.'}</p>
+      <dl className="facts"><div><dt>Oppervlakte</dt><dd>{l.area === null ? 'Onbekend' : `${l.area.toLocaleString('nl-NL')} m²`}</dd></div><div><dt>Beschikbaar per</dt><dd>{l.moveInDate ? <time dateTime={l.moveInDate}>{l.moveIn}</time> : l.moveIn || 'Niet vermeld'}</dd></div><div><dt>Slaapkamers</dt><dd>{l.bedrooms ?? 'Niet vermeld'}</dd></div>{presentation.locationFacts.map(({label,value})=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}<div><dt>Aangeboden door</dt><dd>{l.advertiser || sources[l.source]}</dd></div><div><dt>Verhuurder</dt><dd>{l.landlord || 'Niet afzonderlijk vermeld'}</dd></div><div><dt>Gas, water & elektra</dt><dd>{l.rent.utilities}</dd></div></dl>
+      {presentation.attribution && <p className="field-note">{presentation.attribution}. <a href={cbsDocumentation} target="_blank" rel="noreferrer">Bron</a> · <a href={cbsLicence} target="_blank" rel="noreferrer">Licentie</a>{presentation.refreshNote && ` · ${presentation.refreshNote}`}</p>}
       <section className="costs" aria-label="Huur en bijkomende kosten"><h3>Huur en bijkomende kosten</h3><dl><div><dt>Geadverteerde huurprijs</dt><dd>{money(l.rent.headline)}</dd></div><div><dt>Kale huur</dt><dd>{money(l.rent.base)}</dd></div><div><dt>Service totaal / voorschot</dt><dd>{money(l.rent.serviceAggregate)}</dd></div>{l.rent.service !== null && <div><dt>Waarvan service</dt><dd>{money(l.rent.service)}</dd></div>}{l.rent.energy !== null && <div><dt>Waarvan energie</dt><dd>{money(l.rent.energy)}</dd></div>}<div><dt>Bekend maandbedrag</dt><dd>{money(l.rent.knownMonthly)}</dd></div></dl>{l.source === 'gruno' && l.rent.headlineText && <p>Bronnotatie: {l.rent.headlineText}</p>}<p>{l.rent.note}</p><p>Een onbekende post is geen €0. Controleer ook borg, belastingen en eigen aansluitingen.</p></section>
       <section className="bio"><h3>Over deze woning</h3><p>{l.description}</p></section>
       <PropertyMap listing={l}/>

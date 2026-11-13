@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import type { Coverage, Housing, Listing, Rent, Source } from '../shared/model';
 import { parseGruno } from './gruno';
+import { sourceAddress, titleAddress } from '../shared/address';
 export const sourceUrls: Record<Source, string> = {
   gruno: 'https://www.grunoverhuur.nl/woningaanbod/groningen',
   solide: 'https://solideverhuur.nl/huurwoningen/',
@@ -64,16 +65,16 @@ function parseGenericListing(source: Source, html: string, url: string, observed
   const $ = cheerio.load(html);
   $('script,style,noscript,form,nav,footer').remove();
   const fields = new Map<string, string>();
-  $('tr').each((_, tr) => { const t = $(tr).find('td,th'); if (t.length >= 2) fields.set(clean(t.first().text()).replace(/:$/, '').toLowerCase(), clean(t.eq(1).text())); });
-  $('dt').each((_, dt) => { fields.set(clean($(dt).text()).toLowerCase(), clean($(dt).next('dd').text())); });
-  if (source === 'maxx') $('.div-block-117').each((_,row)=>{
-    const cells=$(row).find('.text-block-49');
-    if (cells.length===2) fields.set(clean(cells.eq(0).text()).toLowerCase(),clean(cells.eq(1).text()));
-  });
-  // Maxx exposes label/value blocks rather than a table on some detail templates.
-  $('[class*="label"], [class*="kenmerk-titel"]').each((_, el) => {
-    const key = clean($(el).text()).replace(/:$/, '').toLowerCase();
-    if (key.length < 45 && !fields.has(key)) fields.set(key, clean($(el).next().text()));
+  const collect = (label: string,value: string) => {
+    const key = clean(label).replace(/:$/,'').toLowerCase();
+    if (!fields.has(key)) fields.set(key,clean(value)); // User policy: first occurrence wins, even if empty.
+  };
+  $('tr, dt, .div-block-117, [class*="label"], [class*="kenmerk-titel"]').each((_, el) => {
+    const node=$(el);
+    if (node.is('tr')) { const cells=node.find('td,th'); if (cells.length>=2) collect(cells.first().text(),cells.eq(1).text()); }
+    else if (node.is('dt')) collect(node.text(),node.next('dd').text());
+    else if (source==='maxx' && node.is('.div-block-117')) { const cells=node.find('.text-block-49');if(cells.length===2) collect(cells.eq(0).text(),cells.eq(1).text()); }
+    else if (!node.is('.div-block-117') && clean(node.text()).length<45) collect(node.text(),node.next().text());
   });
   const field = (...names: string[]) => names.map(n => fields.get(n)).find(Boolean) ?? '';
   const title = source === 'gruno' ? field('adres').split(',')[0] : clean($('h1.entry-title, h1').first().text());
@@ -132,16 +133,22 @@ function parseGenericListing(source: Source, html: string, url: string, observed
   const income = description.match(/(?:minimum|minimaal|minimale)\s+(?:bruto\s+)?(?:maand)?inkomen[^€\n]{0,25}€\s*([\d.,]+)/i);
   const externalId = source === 'gruno' ? field('referentienummer') : source === 'maxx' ? url.match(/id-(\d+)/)?.[1] : $('.epl-listing-single').attr('id')?.replace('post-', '');
   if (!externalId) throw new Error(`${source}: stabiele bron-id ontbreekt`);
+  const city = /\bGroningen\b/i.test(`${field('adres', 'plaats')} ${source === 'solide' ? $('h1.entry-title').next().text() : ''} ${description.slice(0,400)}`) ? 'Groningen' : null;
+  // Reuse the already-supported explicit address pair / Solide postcode-city span.
+  const postalCity = source === 'solide' ? clean($('h1.entry-title').next().text()) : '';
+  const explicitAddress = field('adres') || (/^[1-9]\d{3}\s?[A-Za-z]{2}\s+[\p{L}\p{M} .'’\-]+$/u.test(postalCity) ? `${title}, ${postalCity}` : '');
   return { key: `${source}:${externalId}`, externalId, source, url: url.split('?')[0], title, description, rent, photos,
-    city: /\bGroningen\b/i.test(`${field('adres', 'plaats')} ${source === 'solide' ? $('h1.entry-title').next().text() : ''} ${description.slice(0, 400)}`) ? 'Groningen' : null,
+    city, addressEvidence: explicitAddress ? sourceAddress(explicitAddress,city) : titleAddress(title,city),
     neighbourhood, advertiser: { gruno: 'Gruno Verhuur', solide: 'Solide Verhuur', maxx: 'Maxx Aanhuurmakelaars' }[source], landlord: safeFact(field('verhuurder')),
     moveInDate: calendarDate(moveIn),
     type: typeFrom(field('woning type', 'type woning', 'type object', 'type woonruimte', 'soort woonruimte')) || typeFrom(`${title} ${description.slice(0, 200)}`),
     area: numberNL(field('woonoppervlakte', 'oppervlakte', 'woonoppervlak')), bedrooms: numberNL(bedroomText), moveIn, available, incomeMin: income ? cents(income[1]) : null, observedAt };
 }
 export function parseListing(source: Source, html: string, url: string, observedAt: string): Listing {
-  if (source === 'gruno') return parseGruno(html,url,observedAt,{numberNL,calendarDate,parseCoverage,redact:value=>value.replace(contactPattern,'[contactgegevens weggelaten]')});
-  return parseGenericListing(source,html,url,observedAt);
+  const listing = source === 'gruno'
+    ? parseGruno(html,url,observedAt,{numberNL,calendarDate,parseCoverage,redact:value=>value.replace(contactPattern,'[contactgegevens weggelaten]')})
+    : parseGenericListing(source,html,url,observedAt);
+  return listing;
 }
 export function discover(source: Source, html: string): string[] {
   const $ = cheerio.load(html), base = sourceUrls[source];

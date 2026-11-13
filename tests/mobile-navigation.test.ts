@@ -32,6 +32,13 @@ test('archive filters current real evaluations, not a personal dismissal reason'
   const current={...home,evaluation:evaluate(listing,neutralProfile)};
   for(const filter of ['budget','area','income'] as const)assert.equal(archiveMatches(current,'',filter),false);
 });
+test('archive search includes only current validated official wijk/buurt alongside raw advert wording',()=>{
+  const point={lat:53.22,lon:6.57,provenance:'source' as const,precision:'unknown' as const};
+  const l:Listing={...listing,location:point,officialGeography:{provider:'pdok-cbs',year:2026,version:'0',input:point,status:'known',retrievedAt:'2026-11-13T12:00:00Z',lastAttemptAt:'2026-11-13T12:00:00Z',lastAttemptStatus:'ok',wijk:{code:'WK001404',name:'Officiële wijk'},buurt:{code:'BU00140400',name:'Officiële buurt'},municipality:{code:'GM0014',name:'Groningen'}}};
+  const h=reconcile([],[l],neutralProfile).homes[0];
+  assert.equal(archiveMatches(h,'officiële wijk','all'),true);assert.equal(archiveMatches(h,'OFFICIËLE BUURT','all'),true);assert.equal(archiveMatches(h,'binnenstad','all'),true);
+  const stale={...h,listing:{...l,location:{...point,lat:54}}};assert.equal(archiveMatches(stale,'officiële wijk','all'),false);
+});
 test('collection actions retain homes and real dismissal history; restore never bypasses matching',()=>{
   const home=reconcile([],[listing],neutralProfile).homes[0];
   const favourite=decide(home,'favourite','2026-11-12T00:00:00Z',neutralProfile);

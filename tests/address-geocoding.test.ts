@@ -177,6 +177,13 @@ test('whole title parsing preserves exact suffixes and requires a confirmed city
   assert.equal(addressKey({...address(),postcode:'garbage'}),null);
   assert.equal(addressKey({...address(),street:' VOORBEELDSTRAAT ',city:' groningen '}),addressKey(address()));
 });
+test('active source parser attaches only additive title evidence and preserves missing address facts', () => {
+  const html=readFileSync(new URL('./fixtures/solide.html',import.meta.url),'utf8');
+  const parsed=parseListing('solide',html,'https://example.invalid/property',at);
+  assert.equal(parsed.addressEvidence?.street,'Hardewikerstraat');assert.equal(parsed.addressEvidence?.houseNumber,29);assert.equal(parsed.addressEvidence?.basis,'source-markup');assert.equal(parsed.addressEvidence?.postcode,'9712GR');
+  const range=parseListing('solide',html.replace('Hardewikerstraat 29','Hardewikerstraat 29-31'),'https://example.invalid/property',at);
+  assert.equal(range.addressEvidence,null);assert.equal(range.city,parsed.city);assert.equal(range.neighbourhood,parsed.neighbourhood);
+});
 test('PDOK URL pins documented filter, fields, complete-set limit, and no profile data', () => {
   const url=new URL(geocodingUrl(address()));
   assert.equal(url.origin,'https://api.pdok.nl');assert.equal(url.pathname,'/bzk/locatieserver/search/v3_1/free');
